@@ -274,11 +274,13 @@ const App = {
   },
 
   // ===== 任务卡片HTML =====
-  taskCardHTML(task, isOverdue) {
+  taskCardHTML(task, isOverdue, showCycle) {
     const subj = SUBJECTS[task.subject] || { icon: '📝', color: '#ccc' };
     const statusText = task.status === 'completed' ? '已完成' : (task.status === 'leave' ? '已请假' : '待完成');
     const statusClass = `status-${task.status}`;
     const customBadge = task.isCustom ? '<span class="custom-badge">自定义</span>' : '';
+    const cycleBadge = (showCycle && task.cycleId > 0)
+      ? `<span class="task-card-cycle">周期${task.cycleId}</span>` : '';
 
     return `
       <div class="task-card ${task.status} ${isOverdue ? 'overdue' : ''}" data-task-id="${task.id}"
@@ -286,6 +288,7 @@ const App = {
         <div class="task-card-header">
           <span class="task-card-icon">${subj.icon}</span>
           <span class="task-card-subject">${task.subject}</span>
+          ${cycleBadge}
           ${customBadge}
         </div>
         <div class="task-card-name">${task.name}</div>
@@ -325,6 +328,59 @@ const App = {
     if (cycleFilter !== 'all') tasks = tasks.filter(t => t.cycleId === parseInt(cycleFilter));
     if (statusFilter !== 'all') tasks = tasks.filter(t => t.status === statusFilter);
 
+    document.getElementById('allTaskCount').textContent = `${tasks.length} 项任务`;
+
+    const container = document.getElementById('allTaskGroups');
+
+    if (tasks.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:48px 0;color:var(--text-secondary);">
+          <div style="font-size:48px;margin-bottom:12px;">📭</div>
+          <div style="font-size:16px;">没有匹配的任务</div>
+          <div style="font-size:13px;margin-top:4px;opacity:0.6;">试试切换学科或筛选条件</div>
+        </div>`;
+      return;
+    }
+
+    // 选中具体科目时：扁平列表按Day编号全局排序，不按周期分组
+    if (this.activeSubject !== 'all') {
+      const sorted = this.sortTasks(tasks);
+      const subj = SUBJECTS[this.activeSubject] || { icon: '📝', color: '#ccc' };
+      const completedCount = sorted.filter(t => t.status === 'completed').length;
+      const pct = sorted.length > 0 ? Math.round(completedCount / sorted.length * 100) : 0;
+
+      container.innerHTML = `
+        <div class="cycle-group">
+          <div class="cycle-group-header">
+            <div class="cycle-badge" style="border-color:${subj.color}44;">
+              <span class="cycle-badge-num" style="color:${subj.color};">${subj.icon}</span>
+              <span class="cycle-badge-label">${this.activeSubject}</span>
+            </div>
+            <div class="cycle-group-info">
+              <span style="font-size:16px;font-weight:700;color:var(--text-primary);">${this.activeSubject} 全部任务</span>
+              <div class="cycle-group-date">
+                <span class="date-dot" style="background:${subj.color};"></span>共 ${sorted.length} 项 · 已完成 ${completedCount} 项
+              </div>
+            </div>
+            <div class="cycle-group-progress">
+              <div class="cycle-progress-bar">
+                <div class="cycle-progress-fill" style="width:${pct}%"></div>
+              </div>
+              <span class="cycle-progress-text">${completedCount}/${sorted.length}</span>
+            </div>
+          </div>
+          <div class="cycle-group-tasks">
+            ${sorted.map(t => this.taskCardHTML(t, false, true)).join('')}
+          </div>
+        </div>`;
+
+      container.querySelectorAll('.task-card').forEach(card => {
+        card.addEventListener('click', () => this.openTaskDetail(card.dataset.taskId));
+      });
+      return;
+    }
+
+    // "全部"科目时：按周期分组（原有逻辑）
     // 按周期分组
     const groups = {};
     tasks.forEach(t => {
@@ -344,20 +400,6 @@ const App = {
       if (b === 0) return -1;
       return a - b;
     });
-
-    document.getElementById('allTaskCount').textContent = `${tasks.length} 项任务`;
-
-    const container = document.getElementById('allTaskGroups');
-
-    if (tasks.length === 0) {
-      container.innerHTML = `
-        <div style="text-align:center;padding:48px 0;color:var(--text-secondary);">
-          <div style="font-size:48px;margin-bottom:12px;">📭</div>
-          <div style="font-size:16px;">没有匹配的任务</div>
-          <div style="font-size:13px;margin-top:4px;opacity:0.6;">试试切换学科或筛选条件</div>
-        </div>`;
-      return;
-    }
 
     container.innerHTML = sortedCycles.map(cid => {
       const cycleTasks = groups[cid];
