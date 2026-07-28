@@ -81,11 +81,13 @@ const Store = {
     const state = this.load();
     const merged = TASKS.map(t => {
       const override = state.taskOverrides[t.id] || {};
-      // 逾期重分配：如果用户未手动调整截止日期，应用新截止日期
-      const redistDeadline = OVERDUE_REDISTRIBUTION[t.id] || null;
-      const effectiveDeadline = override.deadline || redistDeadline || t.deadline;
+      // 逾期重分配：如果用户未手动调整，应用新的截止日期和周期
+      const redist = OVERDUE_REDISTRIBUTION[t.id] || null;
+      const effectiveDeadline = override.deadline || (redist && redist.deadline) || t.deadline;
+      const effectiveCycleId = redist ? redist.cycleId : t.cycleId;
       return {
         ...t,
+        cycleId: effectiveCycleId,
         status: override.status || t.status,
         deadline: effectiveDeadline,
         completedDate: override.completedDate || null,
