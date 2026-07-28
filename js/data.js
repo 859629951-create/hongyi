@@ -399,8 +399,8 @@ const WISH_COST = 30;              // 单次祈愿消耗30原石
 const MAX_LEAVE_PER_TASK = 1;      // 每个任务最多请假1次
 
 // ===== 全局Day任务重分配 =====
-// 将所有"DayX"任务不再绑定原周期，均匀分配到周期9-19
-// 按科目顺序 + Day编号排序，每周期分到均等数量
+// 每个科目的Day任务独立均匀分配到周期9-19
+// 确保每个周期都包含所有科目
 // 非Day逾期任务（周期4-8）也移到周期9
 // 返回 { taskId: { deadline, cycleId } }
 function redistributeAllDayTasks() {
@@ -410,33 +410,34 @@ function redistributeAllDayTasks() {
   const typeOrder = { R: 0, N: 1, P: 2 };
   const map = {};
 
-  // ===== Part 1: 所有Day任务 → 均匀分配到周期9-19 =====
-  const dayTasks = TASKS.filter(t => /^Day\d+/.test(t.name));
+  // ===== Part 1: 每个科目独立分配Day任务到周期9-19 =====
+  subjectOrder.forEach(subj => {
+    const subjDayTasks = TASKS.filter(t => t.subject === subj && /^Day\d+/.test(t.name));
+    if (subjDayTasks.length === 0) return;
 
-  // 按科目顺序、Day编号、R/N/P类型排序
-  dayTasks.sort((a, b) => {
-    const aSubj = subjectOrder.indexOf(a.subject);
-    const bSubj = subjectOrder.indexOf(b.subject);
-    if (aSubj !== bSubj) return aSubj - bSubj;
+    // 按Day编号 + R/N/P类型排序
+    subjDayTasks.sort((a, b) => {
+      const aDay = parseInt((a.name.match(/Day(\d+)/) || [0, 0])[1]);
+      const bDay = parseInt((b.name.match(/Day(\d+)/) || [0, 0])[1]);
+      if (aDay !== bDay) return aDay - bDay;
+      const aType = a.id.slice(-1);
+      const bType = b.id.slice(-1);
+      return (typeOrder[aType] ?? 3) - (typeOrder[bType] ?? 3);
+    });
 
-    const aDay = parseInt((a.name.match(/Day(\d+)/) || [0, 0])[1]);
-    const bDay = parseInt((b.name.match(/Day(\d+)/) || [0, 0])[1]);
-    if (aDay !== bDay) return aDay - bDay;
+    const count = subjDayTasks.length;
+    const numCycles = futureCycles.length;
 
-    const aType = a.id.slice(-1);
-    const bType = b.id.slice(-1);
-    return (typeOrder[aType] ?? 3) - (typeOrder[bType] ?? 3);
-  });
-
-  // 均匀分配：每周期 Math.ceil(总数/周期数) 个任务
-  const perCycle = Math.ceil(dayTasks.length / futureCycles.length);
-  dayTasks.forEach((task, idx) => {
-    const cycleIdx = Math.min(Math.floor(idx / perCycle), futureCycles.length - 1);
-    const cycle = futureCycles[cycleIdx];
-    map[task.id] = {
-      deadline: cycle.endDate,
-      cycleId: cycle.id,
-    };
+    // Bresenham式均匀分布：task idx → cycle floor(idx * numCycles / count)
+    // 确保每个周期分到尽可能均等的数量，Day编号从小到大递增
+    subjDayTasks.forEach((task, idx) => {
+      const cycleIdx = Math.min(Math.floor(idx * numCycles / count), numCycles - 1);
+      const cycle = futureCycles[cycleIdx];
+      map[task.id] = {
+        deadline: cycle.endDate,
+        cycleId: cycle.id,
+      };
+    });
   });
 
   // ===== Part 2: 非Day逾期任务（周期4-8）→ 移到周期9 =====
