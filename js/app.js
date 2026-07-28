@@ -255,7 +255,8 @@ const App = {
     }
 
     const grid = document.getElementById('overdueGrid');
-    grid.innerHTML = overdueTasks.map(t => this.taskCardHTML(t, true)).join('');
+    const sortedOverdue = this.sortTasks(overdueTasks);
+    grid.innerHTML = sortedOverdue.map(t => this.taskCardHTML(t, true)).join('');
 
     grid.querySelectorAll('.task-card').forEach(card => {
       card.addEventListener('click', () => this.openTaskDetail(card.dataset.taskId));
@@ -273,7 +274,7 @@ const App = {
       return;
     }
 
-    grid.innerHTML = tasks.map(t => this.taskCardHTML(t, false)).join('');
+    grid.innerHTML = this.sortTasks(tasks).map(t => this.taskCardHTML(t, false)).join('');
     grid.querySelectorAll('.task-card').forEach(card => {
       card.addEventListener('click', () => this.openTaskDetail(card.dataset.taskId));
     });
@@ -304,6 +305,23 @@ const App = {
     `;
   },
 
+  // ===== 任务排序（按科目顺序 + Day编号） =====
+  sortTasks(tasks) {
+    const subjectOrder = Object.keys(SUBJECTS);
+    return [...tasks].sort((a, b) => {
+      const aSubj = subjectOrder.indexOf(a.subject);
+      const bSubj = subjectOrder.indexOf(b.subject);
+      if (aSubj !== bSubj) return aSubj - bSubj;
+
+      const aDay = parseInt((a.name.match(/Day(\d+)/) || [, '0'])[1]);
+      const bDay = parseInt((b.name.match(/Day(\d+)/) || [, '0'])[1]);
+      if (aDay !== bDay) return aDay - bDay;
+
+      // 同Day编号按名称排序（处理语文R/N/P后缀等）
+      return a.name.localeCompare(b.name);
+    });
+  },
+
   // ===== 全部任务列表（按学科+周期分组） =====
   renderAllTasks() {
     const cycleFilter = document.getElementById('cycleFilter').value;
@@ -320,6 +338,11 @@ const App = {
       const cid = t.cycleId > 0 ? t.cycleId : 0;
       if (!groups[cid]) groups[cid] = [];
       groups[cid].push(t);
+    });
+
+    // 每个周期分组内按科目+Day编号排序
+    Object.keys(groups).forEach(cid => {
+      groups[cid] = this.sortTasks(groups[cid]);
     });
 
     // 排序周期
@@ -685,6 +708,24 @@ const App = {
 
       <div class="settings-card">
         <div class="settings-card-title">
+          <span>💾</span> 数据导入导出
+        </div>
+        <div class="settings-card-desc">
+          导出当前所有数据（打卡记录、原石、祈愿记录、图鉴等）为JSON文件备份。需要恢复时，从备份文件导入即可。
+        </div>
+        <div class="sync-actions" style="display:flex;gap:12px;">
+          <button class="action-btn" id="btnExportData" style="background:linear-gradient(135deg, #2a4a6a, #3a6a8a);color:#fff;border:1px solid rgba(116,180,232,0.4);flex:1;">
+            📤 导出数据
+          </button>
+          <button class="action-btn" id="btnImportData" style="background:linear-gradient(135deg, #2a6a4a, #3a8a5a);color:#fff;border:1px solid rgba(141,232,116,0.4);flex:1;">
+            📥 导入数据
+          </button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;">
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">
           <span>🔄</span> 同步说明
         </div>
         <div class="settings-card-desc">
@@ -712,6 +753,19 @@ const App = {
     }
     if (btnDisconnect) {
       btnDisconnect.addEventListener('click', () => this.handleDisconnect());
+    }
+
+    const btnExport = document.getElementById('btnExportData');
+    const btnImport = document.getElementById('btnImportData');
+    const importInput = document.getElementById('importFileInput');
+    if (btnExport) {
+      btnExport.addEventListener('click', () => this.handleExportData());
+    }
+    if (btnImport) {
+      btnImport.addEventListener('click', () => importInput.click());
+    }
+    if (importInput) {
+      importInput.addEventListener('change', (e) => this.handleImportData(e));
     }
   },
 
@@ -777,6 +831,50 @@ const App = {
     this.updateSyncStatus();
     this.renderSettings();
     this.showToast('已断开同步连接', 'success');
+  },
+
+  // ===== 数据导出 =====
+  handleExportData() {
+    const state = Store.load();
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hongyi-backup-${Store.getTodayStr()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showToast('数据已导出为文件', 'success');
+  },
+
+  // ===== 数据导入 =====
+  handleImportData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (typeof data !== 'object' || data === null) {
+          this.showToast('导入失败：文件格式不正确', 'error');
+          return;
+        }
+        if (!confirm('导入数据将覆盖当前所有数据（打卡记录、原石、祈愿记录等），确定继续？')) return;
+        const merged = { ...Store.getDefaultState(), ...data };
+        Store.save(merged);
+        this.updateTopBar();
+        this.buildSubjectNav();
+        this.renderAll();
+        this.showToast('数据导入成功！', 'success');
+      } catch (err) {
+        this.showToast('导入失败：文件解析错误', 'error');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
   },
 
   // ===== 祈愿页面渲染 =====
