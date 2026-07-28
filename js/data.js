@@ -398,62 +398,63 @@ const CYCLE_BONUS = 90;            // 周期内所有任务全部完成额外奖
 const WISH_COST = 30;              // 单次祈愿消耗30原石
 const MAX_LEAVE_PER_TASK = 1;      // 每个任务最多请假1次
 
-// ===== 逾期任务重分配 =====
-// 将周期4-8的未完成任务从7月29日开始紧凑排列，每天最多3个
-// 物理/语文学科优先，同一学科按Day编号从小到大
+// ===== 全局Day任务重分配 =====
+// 将所有"DayX"任务不再绑定原周期，均匀分配到周期9-19
+// 按科目顺序 + Day编号排序，每周期分到均等数量
+// 非Day逾期任务（周期4-8）也移到周期9
 // 返回 { taskId: { deadline, cycleId } }
-function redistributeOverdue() {
+function redistributeAllDayTasks() {
   const today = new Date('2026-07-29T00:00:00+08:00');
+  const futureCycles = CYCLES.filter(c => c.id >= 9);
+  const subjectOrder = Object.keys(SUBJECTS);
+  const typeOrder = { R: 0, N: 1, P: 2 };
+  const map = {};
 
-  // 收集所有逾期任务（周期4-8，deadline < 7月29日）
-  const overdueTasks = [];
-  TASKS.forEach(t => {
-    const dl = new Date(t.deadline + 'T00:00:00+08:00');
-    if (dl < today && t.cycleId <= 8) {
-      overdueTasks.push({ id: t.id, name: t.name, subject: t.subject });
-    }
-  });
+  // ===== Part 1: 所有Day任务 → 均匀分配到周期9-19 =====
+  const dayTasks = TASKS.filter(t => /^Day\d+/.test(t.name));
 
-  // 排序：物理→语文→其他；同科目按Day编号；同Day语文按 R<N<P
-  const subjPriority = { '物理': 0, '语文': 1 };
-  overdueTasks.sort((a, b) => {
-    const aP = subjPriority[a.subject] ?? 2;
-    const bP = subjPriority[b.subject] ?? 2;
-    if (aP !== bP) return aP - bP;
+  // 按科目顺序、Day编号、R/N/P类型排序
+  dayTasks.sort((a, b) => {
+    const aSubj = subjectOrder.indexOf(a.subject);
+    const bSubj = subjectOrder.indexOf(b.subject);
+    if (aSubj !== bSubj) return aSubj - bSubj;
 
     const aDay = parseInt((a.name.match(/Day(\d+)/) || [0, 0])[1]);
     const bDay = parseInt((b.name.match(/Day(\d+)/) || [0, 0])[1]);
     if (aDay !== bDay) return aDay - bDay;
 
-    const typeOrder = { R: 0, N: 1, P: 2 };
-    const aLast = a.id.slice(-1);
-    const bLast = b.id.slice(-1);
-    return (typeOrder[aLast] ?? 0) - (typeOrder[bLast] ?? 0);
+    const aType = a.id.slice(-1);
+    const bType = b.id.slice(-1);
+    return (typeOrder[aType] ?? 3) - (typeOrder[bType] ?? 3);
   });
 
-  // 从7月29日起，每天最多3个任务，顺序分配
-  const pad = n => String(n).padStart(2, '0');
-  const MAX_PER_DAY = 3;
-  const map = {};
-  const cursor = new Date(today);
-  let taskIdx = 0;
+  // 均匀分配：每周期 Math.ceil(总数/周期数) 个任务
+  const perCycle = Math.ceil(dayTasks.length / futureCycles.length);
+  dayTasks.forEach((task, idx) => {
+    const cycleIdx = Math.min(Math.floor(idx / perCycle), futureCycles.length - 1);
+    const cycle = futureCycles[cycleIdx];
+    map[task.id] = {
+      deadline: cycle.endDate,
+      cycleId: cycle.id,
+    };
+  });
 
-  while (taskIdx < overdueTasks.length) {
-    for (let s = 0; s < MAX_PER_DAY && taskIdx < overdueTasks.length; s++, taskIdx++) {
-      const dateStr = `${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}-${pad(cursor.getDate())}`;
-      const cycle = CYCLES.find(c => dateStr >= c.startDate && dateStr <= c.endDate);
-      map[overdueTasks[taskIdx].id] = {
-        deadline: dateStr,
-        cycleId: cycle ? cycle.id : overdueTasks[taskIdx].cycleId,
+  // ===== Part 2: 非Day逾期任务（周期4-8）→ 移到周期9 =====
+  TASKS.forEach(t => {
+    if (/^Day\d+/.test(t.name)) return;
+    const dl = new Date(t.deadline + 'T00:00:00+08:00');
+    if (dl < today && t.cycleId <= 8) {
+      map[t.id] = {
+        deadline: futureCycles[0].endDate,
+        cycleId: futureCycles[0].id,
       };
     }
-    cursor.setDate(cursor.getDate() + 1);
-  }
+  });
 
   return map;
 }
 
-const OVERDUE_REDISTRIBUTION = redistributeOverdue();
+const TASK_REDISTRIBUTION = redistributeAllDayTasks();
 
 // 全局导出
 if (typeof window !== 'undefined') {
@@ -466,5 +467,5 @@ if (typeof window !== 'undefined') {
   window.CYCLE_BONUS = CYCLE_BONUS;
   window.WISH_COST = WISH_COST;
   window.MAX_LEAVE_PER_TASK = MAX_LEAVE_PER_TASK;
-  window.OVERDUE_REDISTRIBUTION = OVERDUE_REDISTRIBUTION;
+  window.TASK_REDISTRIBUTION = TASK_REDISTRIBUTION;
 }
