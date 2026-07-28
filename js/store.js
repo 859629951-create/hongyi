@@ -18,6 +18,8 @@ const Store = {
       checkinRecords: [],
       wishRecords: [],
       collection: {},
+      // 每日全勤奖励记录 { '2026-07-29': true }
+      dailyBonuses: {},
       activeTab: 'home',
     };
   },
@@ -52,6 +54,7 @@ const Store = {
       checkinRecords: v1data.checkinRecords || [],
       wishRecords: v1data.wishRecords || [],
       collection: v1data.collection || {},
+      dailyBonuses: {},
       activeTab: v1data.activeTab || 'home',
     };
   },
@@ -78,10 +81,13 @@ const Store = {
     const state = this.load();
     const merged = TASKS.map(t => {
       const override = state.taskOverrides[t.id] || {};
+      // 逾期重分配：如果用户未手动调整截止日期，应用新截止日期
+      const redistDeadline = OVERDUE_REDISTRIBUTION[t.id] || null;
+      const effectiveDeadline = override.deadline || redistDeadline || t.deadline;
       return {
         ...t,
         status: override.status || t.status,
-        deadline: override.deadline || t.deadline,
+        deadline: effectiveDeadline,
         completedDate: override.completedDate || null,
         leaveDate: override.leaveDate || null,
         adjustedDate: override.adjustedDate || null,
@@ -121,6 +127,13 @@ const Store = {
     return state;
   },
 
+  // 获取今日日期字符串
+  getTodayStr() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  },
+
   // 打卡完成
   completeTask(taskId) {
     const state = this.load();
@@ -132,22 +145,58 @@ const Store = {
     if (existing.status === 'completed' || existing.status === 'leave') return null;
 
     const now = new Date().toISOString();
+
+    // 判断是否为逾期补打卡：原始截止日期在今天之前
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const origDl = new Date(task.originalDeadline + 'T00:00:00+08:00');
+    const isOverdue = origDl < today;
+    const reward = isOverdue ? OVERDUE_REWARD : REWARD_PRIMOGEMS;
+
     state.taskOverrides[taskId] = {
       ...state.taskOverrides[taskId],
       status: 'completed',
       completedDate: now,
     };
-    state.primogems += REWARD_PRIMOGEMS;
+    state.primogems += reward;
     state.checkinRecords.push({
       taskId,
       taskName: task.name,
       subject: task.subject,
       cycleId: task.cycleId,
       time: now,
-      reward: REWARD_PRIMOGEMS,
+      reward,
+      isOverdue,
     });
+
+    // 检查每日全勤奖励
+    const dailyResult = this._checkDailyBonus(state);
+
     this.save(state);
-    return state;
+    return { state, reward, isOverdue, dailyBonus: dailyResult };
+  },
+
+  // 检查每日全勤：当天所有任务（含重分配任务）是否全部完成
+  _checkDailyBonus(state) {
+    const todayStr = this.getTodayStr();
+    if (state.dailyBonuses && state.dailyBonuses[todayStr]) return null;
+
+    const allTasks = this.getAllTasks();
+    const todayTasks = allTasks.filter(t => {
+      if (t.status === 'leave') return false;
+      return t.deadline === todayStr;
+    });
+
+    if (todayTasks.length === 0) return null;
+
+    const allDone = todayTasks.every(t => t.status === 'completed');
+    if (!allDone) return null;
+
+    // 全勤！奖励30原石
+    if (!state.dailyBonuses) state.dailyBonuses = {};
+    state.dailyBonuses[todayStr] = true;
+    state.primogems += DAILY_BONUS;
+    return { earned: DAILY_BONUS, taskCount: todayTasks.length };
   },
 
   // 请假 — 每个任务最多1次
@@ -330,9 +379,16 @@ const Store = {
     const leave = tasks.filter(t => t.status === 'leave');
     const pending = tasks.filter(t => t.status === 'pending');
     const totalEarned = state.checkinRecords.reduce((sum, r) => sum + r.reward, 0);
+    const dailyBonusTotal = Object.keys(state.dailyBonuses || {}).length * DAILY_BONUS;
     const totalSpent = state.wishRecords.length * WISH_COST;
     const collectionCount = Object.keys(state.collection).length;
     const totalPoolSize = GACHA_POOL.five.length + GACHA_POOL.four.length + GACHA_POOL.three.length;
+
+    // 今日待完成任务
+    const todayStr = this.getTodayStr();
+    const todayTasks = tasks.filter(t => t.status !== 'leave' && t.deadline === todayStr);
+    const todayDone = todayTasks.filter(t => t.status === 'completed').length;
+    const todayAllDone = todayTasks.length > 0 && todayDone === todayTasks.length;
 
     return {
       totalTasks: tasks.length,
@@ -342,6 +398,7 @@ const Store = {
       pendingCount: pending.length,
       primogems: state.primogems,
       totalEarned,
+      dailyBonusTotal,
       totalSpent,
       totalWishes: state.wishRecords.length,
       collectionCount,
@@ -351,6 +408,10 @@ const Store = {
       fourStarCount: state.wishRecords.filter(w => w.rarity === 4).length,
       threeStarCount: state.wishRecords.filter(w => w.rarity === 3).length,
       pityCounter: state.pityCounter || 0,
+      todayTaskCount: todayTasks.length,
+      todayDoneCount: todayDone,
+      todayAllDone,
+      dailyBonusClaimed: !!(state.dailyBonuses && state.dailyBonuses[todayStr]),
     };
   },
 
