@@ -379,35 +379,56 @@ const WISH_COST = 30;              // 单次祈愿消耗30原石
 const MAX_LEAVE_PER_TASK = 1;      // 每个任务最多请假1次
 
 // ===== 逾期任务重分配 =====
-// 将周期4-8的未完成任务均匀分配到7月29日~8月30日
+// 将周期4-8的未完成任务从7月29日开始紧凑排列，每天最多3个
+// 物理/语文学科优先，同一学科按Day编号从小到大
+// 返回 { taskId: { deadline, cycleId } }
 function redistributeOverdue() {
   const today = new Date('2026-07-29T00:00:00+08:00');
-  const endDate = new Date('2026-08-30T00:00:00+08:00');
 
   // 收集所有逾期任务（周期4-8，deadline < 7月29日）
-  const overdueIds = [];
+  const overdueTasks = [];
   TASKS.forEach(t => {
     const dl = new Date(t.deadline + 'T00:00:00+08:00');
     if (dl < today && t.cycleId <= 8) {
-      overdueIds.push(t.id);
+      overdueTasks.push({ id: t.id, name: t.name, subject: t.subject });
     }
   });
 
-  // 生成33天日期槽位
-  const slots = [];
+  // 排序：物理→语文→其他；同科目按Day编号；同Day语文按 R<N<P
+  const subjPriority = { '物理': 0, '语文': 1 };
+  overdueTasks.sort((a, b) => {
+    const aP = subjPriority[a.subject] ?? 2;
+    const bP = subjPriority[b.subject] ?? 2;
+    if (aP !== bP) return aP - bP;
+
+    const aDay = parseInt((a.name.match(/Day(\d+)/) || [0, 0])[1]);
+    const bDay = parseInt((b.name.match(/Day(\d+)/) || [0, 0])[1]);
+    if (aDay !== bDay) return aDay - bDay;
+
+    const typeOrder = { R: 0, N: 1, P: 2 };
+    const aLast = a.id.slice(-1);
+    const bLast = b.id.slice(-1);
+    return (typeOrder[aLast] ?? 0) - (typeOrder[bLast] ?? 0);
+  });
+
+  // 从7月29日起，每天最多3个任务，顺序分配
+  const pad = n => String(n).padStart(2, '0');
+  const MAX_PER_DAY = 3;
+  const map = {};
   const cursor = new Date(today);
-  while (cursor <= endDate) {
-    const pad = n => String(n).padStart(2, '0');
-    slots.push(`${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}-${pad(cursor.getDate())}`);
+  let taskIdx = 0;
+
+  while (taskIdx < overdueTasks.length) {
+    for (let s = 0; s < MAX_PER_DAY && taskIdx < overdueTasks.length; s++, taskIdx++) {
+      const dateStr = `${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}-${pad(cursor.getDate())}`;
+      const cycle = CYCLES.find(c => dateStr >= c.startDate && dateStr <= c.endDate);
+      map[overdueTasks[taskIdx].id] = {
+        deadline: dateStr,
+        cycleId: cycle ? cycle.id : overdueTasks[taskIdx].cycleId,
+      };
+    }
     cursor.setDate(cursor.getDate() + 1);
   }
-
-  // 按ID排序确保确定性，轮询分配到日期
-  overdueIds.sort();
-  const map = {};
-  overdueIds.forEach((id, i) => {
-    map[id] = slots[i % slots.length];
-  });
 
   return map;
 }
