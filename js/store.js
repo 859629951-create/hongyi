@@ -81,8 +81,8 @@ const Store = {
     const state = this.load();
     const merged = TASKS.map(t => {
       const override = state.taskOverrides[t.id] || {};
-      // 逾期重分配：如果用户未手动调整，应用新的截止日期和周期
-      const redist = OVERDUE_REDISTRIBUTION[t.id] || null;
+      // 全局Day任务重分配
+      const redist = TASK_REDISTRIBUTION[t.id] || null;
       const effectiveDeadline = override.deadline || (redist && redist.deadline) || t.deadline;
       const effectiveCycleId = redist ? redist.cycleId : t.cycleId;
       return {
