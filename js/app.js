@@ -197,15 +197,9 @@ const App = {
 
   renderCycleBanner() {
     const cycle = Store.getCurrentCycle();
-    const stats = Store.getStats();
     const tasks = Store.getMergedTasks().filter(t => t.cycleId === cycle.id);
     const completed = tasks.filter(t => t.status === 'completed').length;
     const total = tasks.length;
-
-    // 今日进度
-    const todayStr = Store.getTodayStr();
-    const todayTasksAll = Store.getMergedTasks().filter(t => t.status !== 'leave' && t.deadline === todayStr);
-    const todayDone = todayTasksAll.filter(t => t.status === 'completed').length;
 
     const banner = document.getElementById('cycleBanner');
     banner.innerHTML = `
@@ -213,7 +207,6 @@ const App = {
         <div class="cycle-banner-title">周期 ${cycle.id} · 当前周</div>
         <div class="cycle-banner-date">
           ${this.formatDate(cycle.startDate)} ~ ${this.formatDate(cycle.endDate)}
-          ${todayTasksAll.length > 0 ? ` | 今日 ${todayDone}/${todayTasksAll.length}` : ''}
         </div>
       </div>
       <div class="cycle-banner-status">
@@ -550,10 +543,9 @@ const App = {
     this.updateTopBar();
 
     let msg = `打卡成功！获得 ${result.reward} 原石`;
-    if (result.dailyBonus) {
-      msg += ` 🎉 今日全勤！额外 +${result.dailyBonus.earned} 原石`;
-      // 延迟弹出全勤祝贺
-      setTimeout(() => this.showDailyBonusToast(result.dailyBonus), 800);
+    if (result.cycleBonus) {
+      msg += ` 🎉 周期${result.cycleBonus.cycleId}全勤！额外 +${result.cycleBonus.earned} 原石`;
+      setTimeout(() => this.showCycleBonusToast(result.cycleBonus), 800);
     }
     this.showToast(msg, 'success');
 
@@ -955,14 +947,16 @@ const App = {
     setTimeout(() => toast.classList.remove('show'), 1500);
   },
 
-  // 每日全勤祝贺
-  showDailyBonusToast(dailyBonus) {
+  // 周期全勤祝贺
+  showCycleBonusToast(cycleBonus) {
     const toast = document.getElementById('dailyBonusToast');
     if (!toast) return;
+    const titleEl = toast.querySelector('.daily-bonus-title');
     const msgEl = document.getElementById('dailyBonusMsg');
-    if (msgEl) {
-      msgEl.textContent = `今日${dailyBonus.taskCount}项任务全部完成！`;
-    }
+    const rewardEl = toast.querySelector('.daily-bonus-reward');
+    if (titleEl) titleEl.textContent = `周期${cycleBonus.cycleId}全勤达成！`;
+    if (msgEl) msgEl.textContent = `本周期${cycleBonus.taskCount}项任务全部完成！`;
+    if (rewardEl) rewardEl.textContent = `+${cycleBonus.earned} 原石`;
     toast.classList.remove('show');
     void toast.offsetWidth;
     toast.classList.add('show');
