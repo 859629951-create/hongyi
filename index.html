@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>弘毅暑期打卡奖励系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== 顶部状态栏 ========== -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <div class="title-logo">
+        <span class="logo-icon">◈</span>
+        <span class="title-text">弘毅暑期打卡奖励系统</span>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div class="sync-icon" id="syncIcon" title="同步状态">
+        <!-- unset / synced / syncing / error -->
+      </div>
+      <div class="primogem-display" id="primogemDisplay">
+        <span class="primogem-icon"></span>
+        <span class="primogem-count" id="primogemCount">0</span>
+      </div>
+      <div class="leave-display" id="leaveDisplay">
+        <span class="leave-icon">🏖️</span>
+        <span class="leave-text">请假 0次</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 同步状态栏 -->
+  <div class="sync-status-bar" id="syncStatusBar">
+    <!-- 动态填充 -->
+  </div>
+
+  <!-- ========== 导航标签栏 ========== -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="home">
+      <span class="tab-icon">🏠</span>
+      <span class="tab-label">今日待办</span>
+    </button>
+    <button class="tab-btn" data-tab="tasks">
+      <span class="tab-icon">📋</span>
+      <span class="tab-label">全部任务</span>
+    </button>
+    <button class="tab-btn" data-tab="wish">
+      <span class="tab-icon">✨</span>
+      <span class="tab-label">祈愿</span>
+    </button>
+    <button class="tab-btn" data-tab="collection">
+      <span class="tab-icon">📖</span>
+      <span class="tab-label">图鉴</span>
+    </button>
+    <button class="tab-btn" data-tab="stats">
+      <span class="tab-icon">📊</span>
+      <span class="tab-label">统计</span>
+    </button>
+    <button class="tab-btn" data-tab="settings">
+      <span class="tab-icon">⚙️</span>
+      <span class="tab-label">设置</span>
+    </button>
+  </nav>
+
+  <!-- ========== 主内容区 ========== -->
+  <main class="main-content">
+
+    <!-- 今日待办页面 -->
+    <section class="page active" id="page-home">
+      <div class="home-top-bar">
+        <div></div>
+        <button class="add-task-btn" id="addTaskBtn">＋ 新增任务</button>
+      </div>
+      <div class="cycle-banner" id="cycleBanner">
+        <!-- 动态填充 -->
+      </div>
+      <div class="overdue-section" id="overdueSection" style="display:none;">
+        <div class="section-header">
+          <h2>⚠️ 已拖欠任务</h2>
+          <span class="section-count" id="overdueCount">0</span>
+        </div>
+        <div class="task-grid" id="overdueGrid"></div>
+      </div>
+      <div class="current-section">
+        <div class="section-header">
+          <h2>📋 本周期待完成</h2>
+          <span class="section-count" id="currentCount">0</span>
+        </div>
+        <div class="task-grid" id="currentGrid"></div>
+      </div>
+    </section>
+
+    <!-- 全部任务页面 -->
+    <section class="page" id="page-tasks">
+      <!-- 学科二级导航 -->
+      <div class="subject-nav" id="subjectNav">
+        <!-- 动态填充 -->
+      </div>
+      <!-- 筛选栏 -->
+      <div class="task-toolbar">
+        <div class="toolbar-left">
+          <div class="custom-select" id="cycleSelectWrap">
+            <select id="cycleFilter" class="custom-select-native">
+              <option value="all">📅 全部周期</option>
+            </select>
+            <span class="custom-select-arrow">▾</span>
+          </div>
+          <div class="custom-select" id="statusSelectWrap">
+            <select id="statusFilter" class="custom-select-native">
+              <option value="all">📋 全部状态</option>
+              <option value="pending">⏳ 待完成</option>
+              <option value="completed">✅ 已完成</option>
+              <option value="leave">🏖️ 已请假</option>
+            </select>
+            <span class="custom-select-arrow">▾</span>
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <span class="toolbar-count" id="allTaskCount">0 项任务</span>
+        </div>
+      </div>
+      <!-- 任务列表（按周期分组） -->
+      <div class="task-groups" id="allTaskGroups"></div>
+    </section>
+
+    <!-- 祈愿页面 -->
+    <section class="page" id="page-wish">
+      <div class="wish-container">
+        <div class="wish-banner">
+          <div class="wish-banner-bg"></div>
+          <div class="wish-banner-content">
+            <h2>祈愿</h2>
+            <p>消耗 <span class="highlight-gold">20原石</span> 进行一次祈愿</p>
+            <p class="wish-desc">完成作业任务获得原石，祈愿收集角色与武器！</p>
+          </div>
+        </div>
+        <div class="wish-pool-display">
+          <div class="pool-item pool-5star">
+            <div class="pool-rarity">★★★★★</div>
+            <div class="pool-rate">6.0%</div>
+            <div class="pool-names">温迪 · 钟离 · 雷电将军 · 神里绫华 ...</div>
+          </div>
+          <div class="pool-item pool-4star">
+            <div class="pool-rarity">★★★★</div>
+            <div class="pool-rate">30.0%</div>
+            <div class="pool-names">班尼特 · 香菱 · 行秋 · 凝光 ...</div>
+          </div>
+          <div class="pool-item pool-3star">
+            <div class="pool-rarity">★★★</div>
+            <div class="pool-rate">64.0%</div>
+            <div class="pool-names">旅行剑 · 鸦羽弓 · 魔导绪论 ...</div>
+          </div>
+        </div>
+        <div class="wish-action">
+          <button class="wish-btn" id="wishBtn">
+            <span class="wish-btn-cost">
+              <span class="primogem-icon-small"></span>
+              <span>20</span>
+            </span>
+            <span class="wish-btn-text">祈愿1次</span>
+          </button>
+        </div>
+        <div class="pity-info" id="pityInfo"></div>
+      </div>
+    </section>
+
+    <!-- 图鉴页面 -->
+    <section class="page" id="page-collection">
+      <div class="collection-header">
+        <h2>收藏图鉴</h2>
+        <div class="collection-progress">
+          <span id="collectionProgress">0 / 36</span>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+      <div class="collection-tabs">
+        <button class="col-tab active" data-rarity="all">全部</button>
+        <button class="col-tab" data-rarity="5">★★★★★</button>
+        <button class="col-tab" data-rarity="4">★★★★</button>
+        <button class="col-tab" data-rarity="3">★★★</button>
+      </div>
+      <div class="collection-grid" id="collectionGrid"></div>
+    </section>
+
+    <!-- 统计页面 -->
+    <section class="page" id="page-stats">
+      <div class="stats-grid" id="statsGrid">
+        <!-- 动态填充 -->
+      </div>
+      <div class="stats-section">
+        <h3>📋 打卡记录</h3>
+        <div class="record-list" id="checkinRecordList"></div>
+      </div>
+      <div class="stats-section">
+        <h3>🏖️ 请假记录</h3>
+        <div class="record-list" id="leaveRecordList"></div>
+      </div>
+      <div class="stats-section">
+        <h3>📅 日期调整记录</h3>
+        <div class="record-list" id="adjustRecordList"></div>
+      </div>
+      <div class="stats-section">
+        <h3>🌟 祈愿记录</h3>
+        <div class="record-list" id="wishRecordList"></div>
+      </div>
+    </section>
+
+    <!-- 设置页面 -->
+    <section class="page" id="page-settings">
+      <div id="settingsContent">
+        <!-- 动态填充 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== 任务详情弹窗 ========== -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="task-detail-card">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="task-detail-header" id="taskDetailHeader">
+        <!-- 动态填充 -->
+      </div>
+      <div class="task-detail-body">
+        <div class="detail-row">
+          <label>任务名称</label>
+          <div class="detail-value" id="detailName"></div>
+        </div>
+        <div class="detail-row">
+          <label>任务内容</label>
+          <div class="detail-value" id="detailContent"></div>
+        </div>
+        <div class="detail-row">
+          <label>所属周期</label>
+          <div class="detail-value" id="detailCycle"></div>
+        </div>
+        <div class="detail-row">
+          <label>截止日期</label>
+          <div class="detail-value" id="detailDeadline"></div>
+        </div>
+        <div class="detail-row" id="adjustRow">
+          <label>调整完成日期</label>
+          <input type="date" class="date-input" id="adjustDateInput">
+          <button class="adjust-btn" id="adjustBtn">确认调整</button>
+        </div>
+        <div class="detail-row" id="completedInfo" style="display:none;">
+          <label>完成时间</label>
+          <div class="detail-value" id="detailCompletedDate"></div>
+        </div>
+      </div>
+      <div class="task-detail-actions" id="detailActions">
+        <!-- 动态填充 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 新增任务弹窗 ========== -->
+  <div class="modal-overlay" id="addTaskModal">
+    <div class="task-detail-card">
+      <button class="modal-close" id="addTaskModalClose">✕</button>
+      <div class="task-detail-header">
+        <div class="detail-title" style="font-size:20px;">＋ 新增任务</div>
+      </div>
+      <div class="task-detail-body">
+        <div class="detail-row">
+          <label>科目</label>
+          <select id="addTaskSubject" class="filter-select" style="width:100%">
+          </select>
+        </div>
+        <div class="detail-row">
+          <label>任务名称</label>
+          <input type="text" id="addTaskName" class="add-task-input" placeholder="例如：Day13">
+        </div>
+        <div class="detail-row">
+          <label>任务内容</label>
+          <textarea id="addTaskContent" class="add-task-textarea" rows="3" placeholder="例如：物理练习册 Day13"></textarea>
+        </div>
+        <div class="detail-row">
+          <label>截止日期</label>
+          <input type="date" id="addTaskDeadline" class="date-input" style="width:100%">
+        </div>
+      </div>
+      <div class="task-detail-actions">
+        <button class="action-btn btn-complete" id="submitAddTask" style="flex:none;width:100%;">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 祈愿动画覆盖层 ========== -->
+  <div class="wish-overlay" id="wishOverlay">
+    <div class="wish-animation" id="wishAnimation">
+      <div class="wish-stars" id="wishStars"></div>
+      <div class="wish-result" id="wishResult" style="display:none;">
+        <div class="result-card" id="resultCard">
+          <div class="result-glow" id="resultGlow"></div>
+          <div class="result-rarity" id="resultRarity"></div>
+          <div class="result-name" id="resultName"></div>
+          <div class="result-info" id="resultInfo"></div>
+          <div class="result-desc" id="resultDesc"></div>
+          <button class="result-close-btn" id="resultCloseBtn">点击继续</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 原石奖励提示 ========== -->
+  <div class="reward-toast" id="rewardToast">
+    <span class="primogem-icon"></span>
+    <span>+15 原石</span>
+  </div>
+
+  <!-- ========== 通用提示 ========== -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/gacha.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
