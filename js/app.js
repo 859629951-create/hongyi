@@ -77,8 +77,10 @@ const App = {
     document.getElementById('wishBtn').addEventListener('click', () => Gacha.startWish());
     document.getElementById('resultCloseBtn').addEventListener('click', () => Gacha.closeWish());
 
-    // 新增任务
+    // 新增任务（桌面端按钮 + 移动端FAB）
     document.getElementById('addTaskBtn').addEventListener('click', () => this.openAddTaskModal());
+    const fab = document.getElementById('fabAddTask');
+    if (fab) fab.addEventListener('click', () => this.openAddTaskModal());
     document.getElementById('addTaskModalClose').addEventListener('click', () => this.closeAddTaskModal());
     document.getElementById('addTaskModal').addEventListener('click', (e) => {
       if (e.target.id === 'addTaskModal') this.closeAddTaskModal();
@@ -195,15 +197,24 @@ const App = {
 
   renderCycleBanner() {
     const cycle = Store.getCurrentCycle();
+    const stats = Store.getStats();
     const tasks = Store.getMergedTasks().filter(t => t.cycleId === cycle.id);
     const completed = tasks.filter(t => t.status === 'completed').length;
     const total = tasks.length;
+
+    // 今日进度
+    const todayStr = Store.getTodayStr();
+    const todayTasksAll = Store.getMergedTasks().filter(t => t.status !== 'leave' && t.deadline === todayStr);
+    const todayDone = todayTasksAll.filter(t => t.status === 'completed').length;
 
     const banner = document.getElementById('cycleBanner');
     banner.innerHTML = `
       <div class="cycle-banner-info">
         <div class="cycle-banner-title">周期 ${cycle.id} · 当前周</div>
-        <div class="cycle-banner-date">${this.formatDate(cycle.startDate)} ~ ${this.formatDate(cycle.endDate)}</div>
+        <div class="cycle-banner-date">
+          ${this.formatDate(cycle.startDate)} ~ ${this.formatDate(cycle.endDate)}
+          ${todayTasksAll.length > 0 ? ` | 今日 ${todayDone}/${todayTasksAll.length}` : ''}
+        </div>
       </div>
       <div class="cycle-banner-status">
         <div class="cycle-banner-progress">${completed}/${total}</div>
@@ -232,6 +243,16 @@ const App = {
 
     section.style.display = 'block';
     document.getElementById('overdueCount').textContent = overdueTasks.length;
+
+    // 显示逾期重分配信息
+    const redistCount = overdueTasks.filter(t => OVERDUE_REDISTRIBUTION[t.id]).length;
+    const hintEl = document.getElementById('overdueHint');
+    if (hintEl && redistCount > 0) {
+      hintEl.style.display = 'block';
+      hintEl.textContent = `⚠️ ${redistCount} 项逾期任务已重新分配到后续日期，补打卡仅奖励 ${OVERDUE_REWARD} 原石`;
+    } else if (hintEl) {
+      hintEl.style.display = 'none';
+    }
 
     const grid = document.getElementById('overdueGrid');
     grid.innerHTML = overdueTasks.map(t => this.taskCardHTML(t, true)).join('');
@@ -468,11 +489,19 @@ const App = {
         document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
       }
     } else {
+      // 判断是否为逾期任务
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const origDl = new Date(task.originalDeadline + 'T00:00:00+08:00');
+      const isOverdue = origDl < today;
+      const rewardAmount = isOverdue ? OVERDUE_REWARD : REWARD_PRIMOGEMS;
+      const rewardLabel = isOverdue ? `⚠️ 补打卡 (+${rewardAmount}原石)` : `✅ 打卡完成 (+${rewardAmount}原石)`;
+
       const leaveBtnDisabled = !canLeave ? 'disabled' : '';
       const leaveText = canLeave ? '🏖️ 请假' : '🏖️ 请假 (已用完)';
       actions.innerHTML = `
         <button class="action-btn btn-complete" id="btnComplete">
-          ✅ 打卡完成 (+${REWARD_PRIMOGEMS}原石)
+          ${rewardLabel}
         </button>
         <button class="action-btn btn-leave" id="btnLeave" ${leaveBtnDisabled}>
           ${leaveText}
@@ -502,10 +531,19 @@ const App = {
     this.showRewardToast();
     this.closeModal();
     this.updateTopBar();
+
+    let msg = `打卡成功！获得 ${result.reward} 原石`;
+    if (result.isOverdue) msg += '（逾期补打卡）';
+    if (result.dailyBonus) {
+      msg += ` 🎉 今日全勤！额外 +${result.dailyBonus.earned} 原石`;
+      // 延迟弹出全勤祝贺
+      setTimeout(() => this.showDailyBonusToast(result.dailyBonus), 800);
+    }
+    this.showToast(msg, 'success');
+
     const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
     if (activeTab === 'home') this.renderHome();
     else if (activeTab === 'tasks') { this.buildSubjectNav(); this.renderAllTasks(); }
-    this.showToast('打卡成功！获得 15 原石', 'success');
   },
 
   // ===== 请假 =====
@@ -824,6 +862,20 @@ const App = {
     void toast.offsetWidth;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 1500);
+  },
+
+  // 每日全勤祝贺
+  showDailyBonusToast(dailyBonus) {
+    const toast = document.getElementById('dailyBonusToast');
+    if (!toast) return;
+    const msgEl = document.getElementById('dailyBonusMsg');
+    if (msgEl) {
+      msgEl.textContent = `今日${dailyBonus.taskCount}项任务全部完成！`;
+    }
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
   },
 
   showToast(msg, type = '') {
