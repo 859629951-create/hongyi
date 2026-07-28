@@ -132,18 +132,27 @@ const TASKS_RAW = [
   { cycle: 9, subject: '地理', name: 'A4硬笔字', content: '地理A4硬笔书法字帖' },
   { cycle: 9, subject: '数学', name: '做到Day8', content: '数学练习册' },
   { cycle: 9, subject: '物理', name: '做到Day27', content: '物理练习册' },
+  { cycle: 9, subject: '政治', name: '预习Day1-2', content: '政治预习' },
+  { cycle: 9, subject: '地理', name: '预习Day1-2', content: '地理预习' },
+  { cycle: 9, subject: '生物', name: '预习Day1-2', content: '生物预习' },
 
   // 周期10 (8月1日-3日)
   { cycle: 10, subject: '英语', name: 'unit2单词', content: '英语Unit2单词背诵' },
   { cycle: 10, subject: '地理', name: '手抄报', content: '地理手抄报制作' },
   { cycle: 10, subject: '数学', name: '做到Day12', content: '数学练习册' },
   { cycle: 10, subject: '物理', name: '做到Day30', content: '物理练习册' },
+  { cycle: 10, subject: '政治', name: '预习Day3-4', content: '政治预习' },
+  { cycle: 10, subject: '地理', name: '预习Day3-4', content: '地理预习' },
+  { cycle: 10, subject: '生物', name: '预习Day3-4', content: '生物预习' },
 
   // 周期11 (8月4日-6日)
   { cycle: 11, subject: '英语', name: 'unit3单词', content: '英语Unit3单词背诵' },
   { cycle: 11, subject: '历史', name: '预习Day1-3', content: '历史预习' },
   { cycle: 11, subject: '数学', name: '做到Day16', content: '数学练习册' },
   { cycle: 11, subject: '物理', name: '做到Day33', content: '物理练习册' },
+  { cycle: 11, subject: '政治', name: '预习Day5-6', content: '政治预习' },
+  { cycle: 11, subject: '地理', name: '预习Day5-6', content: '地理预习' },
+  { cycle: 11, subject: '生物', name: '预习Day5-6', content: '生物预习' },
 
   // 周期12 (8月7日-9日)
   { cycle: 12, subject: '英语', name: 'unit4单词', content: '英语Unit4单词背诵' },
@@ -151,6 +160,9 @@ const TASKS_RAW = [
   { cycle: 12, subject: '数学', name: '做到Day20', content: '数学练习册' },
   { cycle: 12, subject: '语文', name: '简易研学报告', content: '语文简易研学报告撰写' },
   { cycle: 12, subject: '物理', name: '做到Day36', content: '物理练习册' },
+  { cycle: 12, subject: '政治', name: '预习Day7-8', content: '政治预习' },
+  { cycle: 12, subject: '地理', name: '预习Day7-8', content: '地理预习' },
+  { cycle: 12, subject: '生物', name: '预习Day7-8', content: '生物预习' },
 
   // 周期13 (8月10日-12日)
   { cycle: 13, subject: '英语', name: '做到Day8', content: '英语练习' },
@@ -158,6 +170,9 @@ const TASKS_RAW = [
   { cycle: 13, subject: '数学', name: '做到Day24', content: '数学练习册' },
   { cycle: 13, subject: '语文', name: '做到Day8', content: '语���练习' },
   { cycle: 13, subject: '物理', name: '做到Day39', content: '物理练习册' },
+  { cycle: 13, subject: '政治', name: '预习Day9-10', content: '政治预习' },
+  { cycle: 13, subject: '地理', name: '预习Day9-10', content: '地理预习' },
+  { cycle: 13, subject: '生物', name: '预习Day9-10', content: '生物预习' },
 
   // 周期14 (8月13日-15日)
   { cycle: 14, subject: '英语', name: '做到Day16', content: '英语练习' },
@@ -165,6 +180,9 @@ const TASKS_RAW = [
   { cycle: 14, subject: '数学', name: '做到Day28', content: '数学练习册' },
   { cycle: 14, subject: '语文', name: '做到Day16', content: '语文练习' },
   { cycle: 14, subject: '物理', name: '做到Day42', content: '物理练习册' },
+  { cycle: 14, subject: '政治', name: '预习Day11-12', content: '政治预习' },
+  { cycle: 14, subject: '地理', name: '预习Day11-12', content: '地理预习' },
+  { cycle: 14, subject: '生物', name: '预习Day11-12', content: '生物预习' },
 
   // 周期15 (8月16日-18日)
   { cycle: 15, subject: '英语', name: '做到Day24', content: '英语练习' },
@@ -172,6 +190,9 @@ const TASKS_RAW = [
   { cycle: 15, subject: '数学', name: '做到Day32', content: '数学练习册' },
   { cycle: 15, subject: '语文', name: '做到Day24', content: '语文练习' },
   { cycle: 15, subject: '物理', name: '复习', content: '物理总复习' },
+  { cycle: 15, subject: '政治', name: '预习Day13-14', content: '政治预习' },
+  { cycle: 15, subject: '地理', name: '预习Day13-14', content: '地理预习' },
+  { cycle: 15, subject: '生物', name: '预习Day13-14', content: '生物预习' },
 
   // 周期16 (8月19日-21日)
   { cycle: 16, subject: '英语', name: '做到Day32', content: '英语练习' },
