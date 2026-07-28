@@ -145,13 +145,7 @@ const Store = {
     if (existing.status === 'completed' || existing.status === 'leave') return null;
 
     const now = new Date().toISOString();
-
-    // 判断是否为逾期补打卡：原始截止日期在今天之前
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const origDl = new Date(task.originalDeadline + 'T00:00:00+08:00');
-    const isOverdue = origDl < today;
-    const reward = isOverdue ? OVERDUE_REWARD : REWARD_PRIMOGEMS;
+    const reward = REWARD_PRIMOGEMS;
 
     state.taskOverrides[taskId] = {
       ...state.taskOverrides[taskId],
@@ -166,14 +160,13 @@ const Store = {
       cycleId: task.cycleId,
       time: now,
       reward,
-      isOverdue,
     });
 
     // 检查每日全勤奖励
     const dailyResult = this._checkDailyBonus(state);
 
     this.save(state);
-    return { state, reward, isOverdue, dailyBonus: dailyResult };
+    return { state, reward, dailyBonus: dailyResult };
   },
 
   // 检查每日全勤：当天所有任务（含重分配任务）是否全部完成

@@ -249,7 +249,7 @@ const App = {
     const hintEl = document.getElementById('overdueHint');
     if (hintEl && redistCount > 0) {
       hintEl.style.display = 'block';
-      hintEl.textContent = `⚠️ ${redistCount} 项逾期任务已重新分配到后续日期，补打卡仅奖励 ${OVERDUE_REWARD} 原石`;
+      hintEl.textContent = `📌 ${redistCount} 项逾期任务已重新分配到后续日期，正常打卡即可`;
     } else if (hintEl) {
       hintEl.style.display = 'none';
     }
@@ -489,13 +489,7 @@ const App = {
         document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
       }
     } else {
-      // 判断是否为逾期任务
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const origDl = new Date(task.originalDeadline + 'T00:00:00+08:00');
-      const isOverdue = origDl < today;
-      const rewardAmount = isOverdue ? OVERDUE_REWARD : REWARD_PRIMOGEMS;
-      const rewardLabel = isOverdue ? `⚠️ 补打卡 (+${rewardAmount}原石)` : `✅ 打卡完成 (+${rewardAmount}原石)`;
+      const rewardLabel = `✅ 打卡完成 (+${REWARD_PRIMOGEMS}原石)`;
 
       const leaveBtnDisabled = !canLeave ? 'disabled' : '';
       const leaveText = canLeave ? '🏖️ 请假' : '🏖️ 请假 (已用完)';
@@ -533,7 +527,6 @@ const App = {
     this.updateTopBar();
 
     let msg = `打卡成功！获得 ${result.reward} 原石`;
-    if (result.isOverdue) msg += '（逾期补打卡）';
     if (result.dailyBonus) {
       msg += ` 🎉 今日全勤！额外 +${result.dailyBonus.earned} 原石`;
       // 延迟弹出全勤祝贺
