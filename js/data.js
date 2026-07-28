@@ -393,9 +393,8 @@ const ELEMENT_COLORS = {
 };
 
 // 原石奖励配置
-const REWARD_PRIMOGEMS = 15;       // 每完成一项任务奖励15原石（正常）
-const OVERDUE_REWARD = 10;         // 逾期任务补打卡仅奖励10原石
-const DAILY_BONUS = 30;            // 每日完成所有当天任务额外奖励30原石
+const REWARD_PRIMOGEMS = 15;       // 每完成一项任务奖励15原石
+const CYCLE_BONUS = 90;            // 周期内所有任务全部完成额外奖励90原石
 const WISH_COST = 30;              // 单次祈愿消耗30原石
 const MAX_LEAVE_PER_TASK = 1;      // 每个任务最多请假1次
 
@@ -464,8 +463,7 @@ if (typeof window !== 'undefined') {
   window.GACHA_POOL = GACHA_POOL;
   window.ELEMENT_COLORS = ELEMENT_COLORS;
   window.REWARD_PRIMOGEMS = REWARD_PRIMOGEMS;
-  window.OVERDUE_REWARD = OVERDUE_REWARD;
-  window.DAILY_BONUS = DAILY_BONUS;
+  window.CYCLE_BONUS = CYCLE_BONUS;
   window.WISH_COST = WISH_COST;
   window.MAX_LEAVE_PER_TASK = MAX_LEAVE_PER_TASK;
   window.OVERDUE_REDISTRIBUTION = OVERDUE_REDISTRIBUTION;
