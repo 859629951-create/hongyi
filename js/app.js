@@ -77,8 +77,10 @@ const App = {
     document.getElementById('wishBtn').addEventListener('click', () => Gacha.startWish());
     document.getElementById('resultCloseBtn').addEventListener('click', () => Gacha.closeWish());
 
-    // 新增任务
+    // 新增任务（桌面端按钮 + 移动端FAB）
     document.getElementById('addTaskBtn').addEventListener('click', () => this.openAddTaskModal());
+    const fab = document.getElementById('fabAddTask');
+    if (fab) fab.addEventListener('click', () => this.openAddTaskModal());
     document.getElementById('addTaskModalClose').addEventListener('click', () => this.closeAddTaskModal());
     document.getElementById('addTaskModal').addEventListener('click', (e) => {
       if (e.target.id === 'addTaskModal') this.closeAddTaskModal();

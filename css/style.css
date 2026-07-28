@@ -104,6 +104,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
+  padding-top: calc(12px + env(safe-area-inset-top));
   background: linear-gradient(180deg, rgba(10, 14, 39, 0.98) 0%, rgba(19, 26, 58, 0.95) 100%);
   border-bottom: 1px solid var(--border-gold);
   backdrop-filter: blur(10px);
@@ -2008,16 +2009,335 @@ body {
   background: rgba(212, 175, 55, 0.5);
 }
 
+/* ===== 移动端浮动新增任务按钮 ===== */
+.fab-add-task {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  border: 2px solid var(--gold-light);
+  color: #1a1a2e;
+  font-size: 28px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 90;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 12px var(--gold-glow);
+  transition: all 0.3s;
+  align-items: center;
+  justify-content: center;
+}
+.fab-add-task:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 20px var(--gold-glow);
+}
+.fab-add-task:active {
+  transform: scale(0.95);
+}
+
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {
-  .title-text { font-size: 16px; }
-  .wish-pool-display { grid-template-columns: 1fr; }
-  .task-grid { grid-template-columns: 1fr; }
-  .tab-btn { padding: 6px 14px; }
-  .tab-label { font-size: 11px; }
-  .wish-banner-content h2 { font-size: 24px; }
-  .result-name { font-size: 28px; }
-  .sync-status-bar { font-size: 10px; }
+  /* --- 顶部栏紧凑化 --- */
+  .top-bar {
+    padding: 8px 12px;
+    padding-top: calc(8px + env(safe-area-inset-top));
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .top-bar-left .title-logo {
+    gap: 6px;
+  }
+  .logo-icon {
+    font-size: 22px;
+  }
+  .title-text {
+    font-size: 16px;
+    white-space: nowrap;
+    letter-spacing: 0;
+  }
+  .top-bar-right {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .primogem-display {
+    padding: 4px 10px;
+    gap: 4px;
+  }
+  .primogem-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .primogem-count {
+    font-size: 15px;
+    min-width: 20px;
+  }
+  .leave-display {
+    display: none;
+  }
+  .sync-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  /* --- 导航栏移到底部 --- */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    padding: 4px 0 8px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(10,14,39,0.95) 0%, rgba(13,18,46,0.98) 100%);
+    border-bottom: none;
+    border-top: 1px solid var(--border-light);
+    backdrop-filter: blur(12px);
+    justify-content: space-around;
+    gap: 0;
+    z-index: 100;
+  }
+  .tab-btn {
+    padding: 4px 0;
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+  }
+  .tab-btn.active::after {
+    bottom: auto;
+    top: -4px;
+    width: 24px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .tab-icon {
+    font-size: 22px;
+  }
+  .tab-label {
+    font-size: 10px;
+  }
+
+  /* --- 主内容区避开底部导航 --- */
+  .main-content {
+    padding: 12px 12px calc(80px + env(safe-area-inset-bottom));
+  }
+
+  /* --- FAB 显示 --- */
+  .fab-add-task {
+    display: flex;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  /* --- 首页：隐藏内联新增按钮 --- */
+  .home-top-bar .add-task-btn {
+    display: none;
+  }
+  .home-top-bar {
+    margin-bottom: 12px;
+  }
+
+  /* --- 周期横幅 --- */
+  .cycle-banner {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .cycle-banner-title {
+    font-size: 16px;
+  }
+  .cycle-banner-date {
+    font-size: 12px;
+  }
+  .cycle-banner-progress {
+    font-size: 22px;
+  }
+
+  /* --- 区块标题 --- */
+  .section-header {
+    margin-top: 16px;
+    margin-bottom: 10px;
+  }
+  .section-header h2 {
+    font-size: 15px;
+  }
+
+  /* --- 任务网格/卡片 --- */
+  .task-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .task-card {
+    padding: 14px;
+  }
+  .task-card-name {
+    font-size: 15px;
+  }
+  .task-card-content {
+    font-size: 12px;
+  }
+  .task-card-footer {
+    font-size: 11px;
+  }
+
+  /* --- 全部任务页 --- */
+  .subject-nav {
+    padding: 10px;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .subject-nav-pill {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .task-toolbar {
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+  .toolbar-left {
+    gap: 8px;
+  }
+  .custom-select {
+    min-width: 110px;
+  }
+  .custom-select-native {
+    padding: 8px 28px 8px 10px;
+    font-size: 12px;
+  }
+  .toolbar-count {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  /* --- 周期分组 --- */
+  .cycle-group-header {
+    padding: 10px 14px;
+    gap: 12px;
+  }
+  .cycle-badge {
+    min-width: 42px;
+    height: 42px;
+  }
+  .cycle-badge-num {
+    font-size: 18px;
+  }
+  .cycle-group-tasks {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 8px;
+  }
+  .cycle-progress-bar {
+    width: 60px;
+  }
+
+  /* --- 祈愿页 --- */
+  .wish-pool-display {
+    grid-template-columns: 1fr;
+  }
+  .wish-banner-content {
+    padding: 24px 16px;
+  }
+  .wish-banner-content h2 {
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+  .wish-btn {
+    padding: 14px 48px;
+  }
+  .wish-btn-text {
+    font-size: 16px;
+  }
+
+  /* --- 图鉴页 --- */
+  .collection-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .collection-header h2 {
+    font-size: 18px;
+  }
+
+  /* --- 统计页 --- */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stat-card {
+    padding: 14px;
+  }
+  .stat-value {
+    font-size: 24px;
+  }
+  .stat-icon {
+    font-size: 22px;
+  }
+
+  /* --- 弹窗 --- */
+  .task-detail-card {
+    width: 92%;
+    border-radius: 14px;
+    max-height: 80vh;
+  }
+  .task-detail-header {
+    padding: 20px 18px 14px;
+  }
+  .detail-title {
+    font-size: 18px;
+  }
+  .task-detail-body {
+    padding: 14px 18px;
+  }
+  .detail-row {
+    margin-bottom: 12px;
+  }
+  .detail-value {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  .task-detail-actions {
+    padding: 0 18px 18px;
+    gap: 8px;
+  }
+  .action-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* --- 祈愿结果 --- */
+  .result-name {
+    font-size: 28px;
+  }
+  .result-rarity {
+    font-size: 26px;
+  }
+  .result-card {
+    padding: 24px;
+  }
+
+  /* --- 设置页 --- */
+  .settings-card {
+    padding: 16px;
+  }
+  .settings-card-title {
+    font-size: 16px;
+  }
+  .sync-actions {
+    flex-direction: column;
+  }
+  .sync-actions .action-btn {
+    width: 100%;
+  }
+
+  /* --- Toast位置调整 --- */
+  .toast {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .sync-status-bar {
+    font-size: 10px;
+    padding: 3px 10px;
+  }
 }
 
 /* ===== 设置页面 ===== */
