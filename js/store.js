@@ -79,7 +79,11 @@ const Store = {
   // 获取所有任务（内置 + 自定义）
   getAllTasks() {
     const state = this.load();
-    const merged = TASKS.map(t => {
+    const merged = TASKS.filter(t => {
+      // 软删除：内置任务被用户删除后隐藏
+      const override = state.taskOverrides[t.id] || {};
+      return !override.deleted;
+    }).map(t => {
       const override = state.taskOverrides[t.id] || {};
       // 全局Day任务重分配
       const redist = TASK_REDISTRIBUTION[t.id] || null;
@@ -90,6 +94,9 @@ const Store = {
         cycleId: effectiveCycleId,
         status: override.status || t.status,
         deadline: effectiveDeadline,
+        name: override.name || t.name,
+        content: override.content || t.content,
+        frequency: override.frequency || t.frequency || 'once',
         completedDate: override.completedDate || null,
         leaveDate: override.leaveDate || null,
         adjustedDate: override.adjustedDate || null,
@@ -97,13 +104,19 @@ const Store = {
       };
     });
 
-    // 追加自定义任务
-    const customs = (state.customTasks || []).map(ct => {
+    // 追加自定义任务（排除已删除的）
+    const customs = (state.customTasks || []).filter(ct => {
+      const override = state.taskOverrides[ct.id] || {};
+      return !override.deleted;
+    }).map(ct => {
       const override = state.taskOverrides[ct.id] || {};
       return {
         ...ct,
         status: override.status || ct.status,
         deadline: override.deadline || ct.deadline,
+        name: override.name || ct.name,
+        content: override.content || ct.content,
+        frequency: override.frequency || ct.frequency || 'once',
         completedDate: override.completedDate || null,
         leaveDate: override.leaveDate || null,
         adjustedDate: override.adjustedDate || null,
@@ -292,6 +305,43 @@ const Store = {
     state.customTasks.splice(idx, 1);
     // 同时清除相关记录
     delete state.taskOverrides[taskId];
+    delete state.taskLeaves[taskId];
+    state.leaveRecords = state.leaveRecords.filter(r => r.taskId !== taskId);
+    state.checkinRecords = state.checkinRecords.filter(r => r.taskId !== taskId);
+    state.adjustRecords = state.adjustRecords.filter(r => r.taskId !== taskId);
+    this.save(state);
+    return { success: true };
+  },
+
+  // 更新任务信息（名称/内容/频次）— 对所有任务生效
+  updateTaskInfo(taskId, { name, content, frequency }) {
+    const state = this.load();
+    if (!state.taskOverrides[taskId]) {
+      state.taskOverrides[taskId] = {};
+    }
+    if (name !== undefined) state.taskOverrides[taskId].name = name;
+    if (content !== undefined) state.taskOverrides[taskId].content = content;
+    if (frequency !== undefined) state.taskOverrides[taskId].frequency = frequency;
+    this.save(state);
+    return { success: true };
+  },
+
+  // 删除任务 — 对所有任务生效
+  // 自定义任务：硬删除；内置任务：软删除（标记deleted）
+  deleteTask(taskId) {
+    const state = this.load();
+    const isCustom = (state.customTasks || []).some(t => t.id === taskId);
+
+    if (isCustom) {
+      return this.deleteCustomTask(taskId);
+    }
+
+    // 内置任务：软删除
+    if (!state.taskOverrides[taskId]) {
+      state.taskOverrides[taskId] = {};
+    }
+    state.taskOverrides[taskId].deleted = true;
+    // 清除打卡/请假记录
     delete state.taskLeaves[taskId];
     state.leaveRecords = state.leaveRecords.filter(r => r.taskId !== taskId);
     state.checkinRecords = state.checkinRecords.filter(r => r.taskId !== taskId);
