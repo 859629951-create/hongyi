@@ -227,13 +227,15 @@
         <!-- 动态填充 -->
       </div>
       <div class="task-detail-body">
-        <div class="detail-row">
-          <label>任务名称</label>
-          <input type="text" class="detail-edit-input" id="detailName" />
-        </div>
-        <div class="detail-row">
-          <label>任务内容</label>
-          <textarea class="detail-edit-textarea" id="detailContent" rows="2"></textarea>
+        <div class="detail-row-pair">
+          <div class="detail-row">
+            <label>任务名称</label>
+            <input type="text" class="detail-edit-input" id="detailName" />
+          </div>
+          <div class="detail-row">
+            <label>任务内容</label>
+            <textarea class="detail-edit-textarea" id="detailContent" rows="2"></textarea>
+          </div>
         </div>
         <div class="detail-row">
           <label>任务频次</label>
@@ -248,10 +250,6 @@
         <div class="detail-row">
           <label>所属周期</label>
           <div class="detail-value" id="detailCycle"></div>
-        </div>
-        <div class="detail-row">
-          <label>截止日期</label>
-          <div class="detail-value" id="detailDeadline"></div>
         </div>
         <div class="detail-row" id="adjustRow">
           <label>调整完成日期</label>
