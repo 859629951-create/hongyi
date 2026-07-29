@@ -276,16 +276,14 @@ const Store = {
     const freqCount = { once: 1, every1: 1, every2: 2, every3: 3, every4: 4 };
     const count = freqCount[frequency] || 1;
 
-    // 截止日期
+    // 获取当前周期，任务归入该周期
+    const currentCycle = this.getCurrentCycle();
+    const cycleId = currentCycle ? currentCycle.id : 9;
     const today = this.getTodayStr();
-    let deadline = today;
-    if (frequency !== 'once') {
-      const currentCycle = this.getCurrentCycle();
-      deadline = currentCycle ? currentCycle.endDate : today;
-    }
+    const deadline = (frequency !== 'once' && currentCycle) ? currentCycle.endDate : today;
 
     // 序号标记
-    const markers = ['①', '②', '③', '④'];
+    const markers = ['\u2460', '\u2461', '\u2462', '\u2463'];
 
     if (!state.customTasks) state.customTasks = [];
     const created = [];
@@ -297,7 +295,7 @@ const Store = {
 
       const newTask = {
         id,
-        cycleId: 0,
+        cycleId,
         subject,
         name: taskName,
         content: taskName,
