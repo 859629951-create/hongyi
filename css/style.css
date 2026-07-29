@@ -1118,6 +1118,18 @@ body {
   padding: 20px 24px;
 }
 
+/* 左右两列：任务名称 + 任务内容 */
+.detail-row-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-row-pair .detail-row {
+  margin-bottom: 0;
+}
+
 .detail-row {
   display: flex;
   flex-direction: column;
@@ -1243,7 +1255,21 @@ body {
 .task-detail-actions {
   padding: 4px 24px 24px;
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-detail-actions .action-row {
+  display: flex;
+  gap: 10px;
+}
+
+.task-detail-actions .action-row .action-btn {
+  flex: 1;
+}
+
+.action-btn-full {
+  width: 100%;
 }
 
 .action-btn {
@@ -2422,6 +2448,10 @@ body {
   }
   .task-detail-body {
     padding: 14px 18px;
+  }
+  .detail-row-pair {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   .detail-row {
     margin-bottom: 12px;
