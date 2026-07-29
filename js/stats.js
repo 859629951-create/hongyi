@@ -18,6 +18,7 @@ const Stats = {
     const completionRate = stats.totalTasks > 0
       ? ((stats.completedCount / stats.totalTasks) * 100).toFixed(1)
       : 0;
+    const cycleBonusCount = Object.keys(state.cycleBonuses || {}).length;
 
     const cards = [
       {
@@ -43,6 +44,12 @@ const Stats = {
         value: stats.primogems,
         label: '当前原石',
         color: '#6ad4e8',
+      },
+      {
+        icon: '🏆',
+        value: `${cycleBonusCount}次`,
+        label: '周期全勤奖励',
+        color: 'var(--gold)',
       },
       {
         icon: '📈',
@@ -184,7 +191,7 @@ const Stats = {
           <span class="record-rarity ${rarityClass[r.rarity]}">${rarityStars[r.rarity]}</span>
           <span style="font-weight:600;color:var(--text-gold)">${r.itemName}</span>
           <span style="color:${elementColor}">[${r.element}]</span>
-          <span style="color:var(--text-secondary)">-20原石</span>
+          <span style="color:var(--text-secondary)">-${WISH_COST}原石</span>
           <span class="record-time">${App.formatDateTime(r.time)}</span>
         </div>
       `;

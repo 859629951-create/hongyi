@@ -408,6 +408,17 @@ body {
   margin-left: 4px;
 }
 
+.task-card-cycle {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(116, 200, 232, 0.12);
+  border: 1px solid rgba(116, 200, 232, 0.25);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
 .custom-badge-small {
   font-size: 11px;
   color: var(--gold-light);
@@ -1107,6 +1118,18 @@ body {
   padding: 20px 24px;
 }
 
+/* 左右两列：任务名称 + 任务内容 */
+.detail-row-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-row-pair .detail-row {
+  margin-bottom: 0;
+}
+
 .detail-row {
   display: flex;
   flex-direction: column;
@@ -1130,6 +1153,56 @@ body {
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 10px;
   line-height: 1.6;
+}
+
+/* ===== 任务详情可编辑输入框 ===== */
+.detail-edit-input,
+.detail-edit-textarea,
+.detail-edit-select {
+  width: 100%;
+  font-size: 15px;
+  color: var(--text-primary);
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-gold);
+  border-radius: 10px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.detail-edit-input:focus,
+.detail-edit-textarea:focus,
+.detail-edit-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+}
+
+.detail-edit-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d4af37' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.detail-edit-select option {
+  background: var(--bg-medium);
+  color: var(--text-primary);
+}
+
+.btn-edit-save {
+  background: linear-gradient(135deg, #2a5a4a, #3a7a5a);
+  color: #fff;
+  border: 1px solid rgba(116, 232, 180, 0.3);
+  font-weight: 600;
+}
+
+.btn-edit-save:hover {
+  background: linear-gradient(135deg, #3a6a5a, #4a8a6a);
+  box-shadow: 0 0 12px rgba(116, 232, 180, 0.2);
 }
 
 #adjustRow {
@@ -1182,7 +1255,21 @@ body {
 .task-detail-actions {
   padding: 4px 24px 24px;
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-detail-actions .action-row {
+  display: flex;
+  gap: 10px;
+}
+
+.task-detail-actions .action-row .action-btn {
+  flex: 1;
+}
+
+.action-btn-full {
+  width: 100%;
 }
 
 .action-btn {
@@ -2362,6 +2449,10 @@ body {
   .task-detail-body {
     padding: 14px 18px;
   }
+  .detail-row-pair {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
   .detail-row {
     margin-bottom: 12px;
   }
@@ -2531,4 +2622,310 @@ body {
 .btn-delete-task:hover {
   background: linear-gradient(135deg, #8a3a3a, #aa4a4a);
   box-shadow: 0 0 12px rgba(232, 116, 116, 0.3);
+}
+
+/* ===== 数据导入导出 ===== */
+.io-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s;
+  margin-bottom: 10px;
+}
+.io-btn-export {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(240, 216, 120, 0.08));
+  border: 1px solid var(--border-gold);
+  color: var(--gold-light);
+}
+.io-btn-export:hover {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(240, 216, 120, 0.15));
+  box-shadow: 0 0 12px var(--gold-glow);
+  transform: translateY(-1px);
+}
+.io-btn-import {
+  background: rgba(116, 200, 232, 0.1);
+  border: 1px solid rgba(116, 200, 232, 0.3);
+  color: #6ad4e8;
+}
+.io-btn-import:hover {
+  background: rgba(116, 200, 232, 0.2);
+  box-shadow: 0 0 12px rgba(106, 212, 232, 0.3);
+  transform: translateY(-1px);
+}
+
+/* ===== 五星专属酷炫动画 ===== */
+
+/* 金色闪光铺屏 */
+.five-star-flash {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 220, 80, 0.85) 0%, rgba(240, 160, 32, 0.4) 40%, transparent 70%);
+  animation: fsFlashFade 0.6s ease-out forwards;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes fsFlashFade {
+  0% { opacity: 0; transform: scale(0.3); }
+  15% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* 金色极光背景 */
+.five-star-aurora {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255, 200, 50, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 25% 70%, rgba(255, 160, 0, 0.12) 0%, transparent 40%),
+    radial-gradient(ellipse at 75% 30%, rgba(255, 215, 0, 0.12) 0%, transparent 40%),
+    conic-gradient(from 0deg at 50% 50%, rgba(255, 180, 30, 0.08), rgba(255, 220, 80, 0.08), rgba(255, 160, 0, 0.08), rgba(255, 180, 30, 0.08));
+  animation: fsAuroraSweep 3.5s ease-in-out forwards;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes fsAuroraSweep {
+  0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  30% { opacity: 1; transform: scale(1) rotate(60deg); }
+  100% { opacity: 0.5; transform: scale(1.3) rotate(180deg); }
+}
+
+/* 多重金色光环 */
+.five-star-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  margin-top: -10px;
+  margin-left: -10px;
+  border: 3px solid rgba(255, 200, 50, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(255, 200, 50, 0.4), inset 0 0 20px rgba(255, 200, 50, 0.2);
+  animation: fsRingPulse 1.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes fsRingPulse {
+  0% { width: 20px; height: 20px; margin-top: -10px; margin-left: -10px; opacity: 1; border-width: 4px; }
+  100% { width: 600px; height: 600px; margin-top: -300px; margin-left: -300px; opacity: 0; border-width: 1px; }
+}
+
+/* 金色粒子风暴 */
+.five-star-particle {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 5px; height: 5px;
+  background: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffd700, 0 0 20px rgba(255, 200, 0, 0.6);
+  animation: fsGoldParticleFly 2.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 4;
+}
+@keyframes fsGoldParticleFly {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  15% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.2); opacity: 0; }
+}
+
+/* 金色光柱放射 */
+.five-star-beam {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 3px;
+  height: 200vh;
+  margin-top: -100vh;
+  margin-left: -1.5px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(255, 200, 50, 0.3) 35%,
+    rgba(255, 220, 80, 0.8) 50%,
+    rgba(255, 200, 50, 0.3) 65%,
+    transparent 100%);
+  transform-origin: 50% 50%;
+  animation: fsBeamFlash 1.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes fsBeamFlash {
+  0% { opacity: 0; transform: rotate(var(--beam-rot, 0deg)) scaleX(0); }
+  30% { opacity: 1; transform: rotate(var(--beam-rot, 0deg)) scaleX(1); }
+  70% { opacity: 0.8; transform: rotate(var(--beam-rot, 0deg)) scaleX(1.3); }
+  100% { opacity: 0; transform: rotate(var(--beam-rot, 0deg)) scaleX(1.8); }
+}
+
+/* 旋转金色大星 */
+.five-star-big-star {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 180px; height: 180px;
+  margin-top: -90px;
+  margin-left: -90px;
+  animation: fsStarSpin 2.5s ease-in-out forwards;
+  pointer-events: none;
+  z-index: 6;
+}
+.five-star-big-star::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.five-star-big-star::after {
+  content: '\2605';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 140px;
+  color: #ffd700;
+  text-shadow:
+    0 0 20px #ffd700,
+    0 0 40px rgba(255, 200, 0, 0.8),
+    0 0 80px rgba(255, 160, 0, 0.4);
+  animation: fsStarPulse 0.8s ease-in-out infinite;
+}
+@keyframes fsStarSpin {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  20% { transform: scale(1.2) rotate(72deg); opacity: 1; }
+  50% { transform: scale(1) rotate(180deg); opacity: 1; }
+  100% { transform: scale(2.5) rotate(360deg); opacity: 0; }
+}
+@keyframes fsStarPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+/* 烟花迸发粒子 */
+.five-star-firework {
+  position: absolute;
+  width: 5px; height: 5px;
+  background: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ffd700, 0 0 16px rgba(255, 200, 0, 0.5);
+  animation: fsFireworkBurst 1.2s ease-out forwards;
+  pointer-events: none;
+  z-index: 4;
+}
+@keyframes fsFireworkBurst {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  50% { opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+/* "五星" 文字横幅 */
+.five-star-banner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: transparent;
+  background: linear-gradient(90deg, #ffd700, #fff8dc, #ffd700, #ffa500, #ffd700);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: none;
+  animation: fsBannerAppear 1.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 7;
+  white-space: nowrap;
+}
+.five-star-banner::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px; height: 60px;
+  background: radial-gradient(ellipse, rgba(255, 200, 50, 0.3) 0%, transparent 70%);
+  z-index: -1;
+}
+@keyframes fsBannerAppear {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(3) rotate(-10deg); background-position: 0% center; }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  60% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); background-position: 100% center; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); background-position: 200% center; }
+}
+
+/* 五星结果卡片特殊效果 */
+.result-card.five-star-result {
+  animation: fsResultAppear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.result-card.five-star-result .result-glow {
+  width: 400px;
+  height: 400px;
+  animation: fsGlowPulse 2s ease-in-out infinite;
+}
+.result-card.five-star-result .result-name {
+  font-size: 42px;
+  text-shadow:
+    0 0 20px var(--rarity-5),
+    0 0 40px rgba(240, 160, 32, 0.6),
+    0 0 80px rgba(240, 160, 32, 0.3);
+  animation: fsNameShine 2s ease-in-out infinite;
+}
+.result-card.five-star-result .result-rarity {
+  animation: fsStarsGlow 1.5s ease-in-out infinite;
+}
+@keyframes fsResultAppear {
+  0% { opacity: 0; transform: scale(0.3) rotateY(360deg); filter: blur(20px); }
+  50% { opacity: 1; transform: scale(1.1) rotateY(0deg); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes fsGlowPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+}
+@keyframes fsNameShine {
+  0%, 100% { text-shadow: 0 0 20px var(--rarity-5), 0 0 40px rgba(240, 160, 32, 0.6); }
+  50% { text-shadow: 0 0 30px var(--rarity-5), 0 0 60px rgba(240, 160, 32, 0.8), 0 0 100px rgba(240, 160, 32, 0.4); }
+}
+@keyframes fsStarsGlow {
+  0%, 100% { text-shadow: 0 0 16px var(--rarity-5); transform: scale(1); }
+  50% { text-shadow: 0 0 30px var(--rarity-5), 0 0 50px rgba(240, 160, 32, 0.5); transform: scale(1.1); }
+}
+
+/* ===== 五星动画 - 移动端适配 ===== */
+@media (max-width: 768px) {
+  .five-star-banner {
+    font-size: 32px;
+    letter-spacing: 4px;
+  }
+  .five-star-banner::after {
+    width: 200px;
+    height: 40px;
+  }
+  .five-star-big-star {
+    width: 130px; height: 130px;
+    margin-top: -65px;
+    margin-left: -65px;
+  }
+  .five-star-big-star::after {
+    font-size: 100px;
+  }
+  .five-star-big-star::before {
+    width: 130px; height: 130px;
+  }
+  @keyframes fsRingPulse {
+    0% { width: 20px; height: 20px; margin-top: -10px; margin-left: -10px; opacity: 1; border-width: 4px; }
+    100% { width: 400px; height: 400px; margin-top: -200px; margin-left: -200px; opacity: 0; border-width: 1px; }
+  }
+  .result-card.five-star-result .result-name {
+    font-size: 32px;
+  }
+  .result-card.five-star-result .result-glow {
+    width: 300px;
+    height: 300px;
+  }
 }

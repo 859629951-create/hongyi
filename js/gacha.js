@@ -51,21 +51,144 @@ const Gacha = {
     resultDiv.style.display = 'none';
     overlay.classList.add('active');
 
-    // 阶段1：星辰粒子飞散 (0~1.5秒)
-    this.spawnStarParticles(starsContainer, 40);
-
-    // 阶段2：流星划过 (1~2秒)
-    setTimeout(() => {
-      this.spawnComet(starsContainer, rarity);
-    }, 800);
-
-    // 阶段3：显示结果 (2秒后)
-    setTimeout(() => {
-      this.showResult(item, rarity);
-    }, 2000);
+    if (rarity === 5) {
+      // ===== 五星专属酷炫动画 (3.5秒) =====
+      this.playFiveStarAnimation(starsContainer, () => {
+        this.showResult(item, rarity);
+      });
+    } else {
+      // ===== 普通3/4星动画 (2秒) =====
+      this.spawnStarParticles(starsContainer, 40);
+      setTimeout(() => {
+        this.spawnComet(starsContainer, rarity);
+      }, 800);
+      setTimeout(() => {
+        this.showResult(item, rarity);
+      }, 2000);
+    }
 
     // 完成回调在 closeWish 中处理
     this._onComplete = onComplete;
+  },
+
+  // ===== 五星专属动画 =====
+  playFiveStarAnimation(container, onComplete) {
+    // Phase 0: 金色闪光铺满屏幕 (0s)
+    const flash = document.createElement('div');
+    flash.className = 'five-star-flash';
+    container.appendChild(flash);
+
+    // Phase 1: 金色极光背景 (0.3s)
+    setTimeout(() => {
+      const aurora = document.createElement('div');
+      aurora.className = 'five-star-aurora';
+      container.appendChild(aurora);
+    }, 300);
+
+    // Phase 2: 多重金色光环扩散 (0.8s)
+    setTimeout(() => {
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          const ring = document.createElement('div');
+          ring.className = 'five-star-ring';
+          container.appendChild(ring);
+        }, i * 150);
+      }
+    }, 800);
+
+    // Phase 3: 金色粒子风暴 (1.0s)
+    setTimeout(() => {
+      this.spawnGoldParticles(container, 80);
+    }, 1000);
+
+    // Phase 4: 光柱放射 + 旋转大星 (1.5s)
+    setTimeout(() => {
+      this.spawnLightBeams(container);
+      this.spawnGoldenStar(container);
+    }, 1500);
+
+    // Phase 5: 烟花迸发 (2.2s)
+    setTimeout(() => {
+      this.spawnFireworks(container);
+    }, 2200);
+
+    // Phase 6: "五星" 文字闪现 (2.8s)
+    setTimeout(() => {
+      const banner = document.createElement('div');
+      banner.className = 'five-star-banner';
+      container.appendChild(banner);
+    }, 2800);
+
+    // Phase 7: 展示结果 (3.5s)
+    setTimeout(() => {
+      onComplete();
+    }, 3500);
+  },
+
+  // 金色粒子风暴
+  spawnGoldParticles(container, count) {
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'five-star-particle';
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+      const distance = 150 + Math.random() * 350;
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance;
+      p.style.setProperty('--tx', tx + 'px');
+      p.style.setProperty('--ty', ty + 'px');
+      p.style.animationDelay = Math.random() * 0.5 + 's';
+      const size = 3 + Math.random() * 6;
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      container.appendChild(p);
+    }
+  },
+
+  // 金色光柱放射
+  spawnLightBeams(container) {
+    const beamCount = 12;
+    for (let i = 0; i < beamCount; i++) {
+      const beam = document.createElement('div');
+      beam.className = 'five-star-beam';
+      beam.style.setProperty('--beam-rot', `${(i * 360 / beamCount)}deg`);
+      beam.style.animationDelay = (i * 0.04) + 's';
+      container.appendChild(beam);
+    }
+  },
+
+  // 旋转金色大星
+  spawnGoldenStar(container) {
+    const star = document.createElement('div');
+    star.className = 'five-star-big-star';
+    container.appendChild(star);
+  },
+
+  // 烟花迸发
+  spawnFireworks(container) {
+    const positions = [
+      { x: 50, y: 50 },
+      { x: 28, y: 38 },
+      { x: 72, y: 38 },
+      { x: 35, y: 62 },
+      { x: 65, y: 62 },
+    ];
+    positions.forEach((pos, i) => {
+      setTimeout(() => {
+        const burstCount = 24;
+        for (let j = 0; j < burstCount; j++) {
+          const fw = document.createElement('div');
+          fw.className = 'five-star-firework';
+          const angle = (Math.PI * 2 * j) / burstCount;
+          const dist = 60 + Math.random() * 80;
+          fw.style.left = pos.x + '%';
+          fw.style.top = pos.y + '%';
+          fw.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+          fw.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+          fw.style.animationDelay = Math.random() * 0.2 + 's';
+          container.appendChild(fw);
+        }
+      }, i * 180);
+    });
   },
 
   // 生成星辰粒子
@@ -194,14 +317,21 @@ const Gacha = {
     // 描述
     descEl.textContent = item.desc;
 
+    // 五星结果卡片特殊效果
+    const resultCard = document.getElementById('resultCard');
+    resultCard.classList.remove('five-star-result');
+    if (rarity === 5) {
+      resultCard.classList.add('five-star-result');
+    }
+
     // 检查是否新获得
     const state = Store.load();
-    const isNew = state.collection[item.name].count === 1;
+    const isNew = state.collection[item.name] && state.collection[item.name].count === 1;
     if (isNew) {
       const badge = document.createElement('div');
       badge.className = 'result-new-badge';
       badge.textContent = 'NEW';
-      document.getElementById('resultCard').appendChild(badge);
+      resultCard.appendChild(badge);
     } else {
       // 移除可能存在的badge
       const existingBadge = document.querySelector('.result-new-badge');
@@ -221,6 +351,10 @@ const Gacha = {
     overlay.classList.remove('active');
     resultDiv.classList.remove('active');
     resultDiv.style.display = 'none';
+
+    // 清理五星结果类
+    const resultCard = document.getElementById('resultCard');
+    if (resultCard) resultCard.classList.remove('five-star-result');
 
     // 清理粒子
     document.getElementById('wishStars').innerHTML = '';

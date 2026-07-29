@@ -132,18 +132,27 @@ const TASKS_RAW = [
   { cycle: 9, subject: '地理', name: 'A4硬笔字', content: '地理A4硬笔书法字帖' },
   { cycle: 9, subject: '数学', name: '做到Day8', content: '数学练习册' },
   { cycle: 9, subject: '物理', name: '做到Day27', content: '物理练习册' },
+  { cycle: 9, subject: '政治', name: '预习Day1-2', content: '政治预习' },
+  { cycle: 9, subject: '地理', name: '预习Day1-2', content: '地理预习' },
+  { cycle: 9, subject: '生物', name: '预习Day1-2', content: '生物预习' },
 
   // 周期10 (8月1日-3日)
   { cycle: 10, subject: '英语', name: 'unit2单词', content: '英语Unit2单词背诵' },
   { cycle: 10, subject: '地理', name: '手抄报', content: '地理手抄报制作' },
   { cycle: 10, subject: '数学', name: '做到Day12', content: '数学练习册' },
   { cycle: 10, subject: '物理', name: '做到Day30', content: '物理练习册' },
+  { cycle: 10, subject: '政治', name: '预习Day3-4', content: '政治预习' },
+  { cycle: 10, subject: '地理', name: '预习Day3-4', content: '地理预习' },
+  { cycle: 10, subject: '生物', name: '预习Day3-4', content: '生物预习' },
 
   // 周期11 (8月4日-6日)
   { cycle: 11, subject: '英语', name: 'unit3单词', content: '英语Unit3单词背诵' },
   { cycle: 11, subject: '历史', name: '预习Day1-3', content: '历史预习' },
   { cycle: 11, subject: '数学', name: '做到Day16', content: '数学练习册' },
   { cycle: 11, subject: '物理', name: '做到Day33', content: '物理练习册' },
+  { cycle: 11, subject: '政治', name: '预习Day5-6', content: '政治预习' },
+  { cycle: 11, subject: '地理', name: '预习Day5-6', content: '地理预习' },
+  { cycle: 11, subject: '生物', name: '预习Day5-6', content: '生物预习' },
 
   // 周期12 (8月7日-9日)
   { cycle: 12, subject: '英语', name: 'unit4单词', content: '英语Unit4单词背诵' },
@@ -151,6 +160,9 @@ const TASKS_RAW = [
   { cycle: 12, subject: '数学', name: '做到Day20', content: '数学练习册' },
   { cycle: 12, subject: '语文', name: '简易研学报告', content: '语文简易研学报告撰写' },
   { cycle: 12, subject: '物理', name: '做到Day36', content: '物理练习册' },
+  { cycle: 12, subject: '政治', name: '预习Day7-8', content: '政治预习' },
+  { cycle: 12, subject: '地理', name: '预习Day7-8', content: '地理预习' },
+  { cycle: 12, subject: '生物', name: '预习Day7-8', content: '生物预习' },
 
   // 周期13 (8月10日-12日)
   { cycle: 13, subject: '英语', name: '做到Day8', content: '英语练习' },
@@ -158,6 +170,9 @@ const TASKS_RAW = [
   { cycle: 13, subject: '数学', name: '做到Day24', content: '数学练习册' },
   { cycle: 13, subject: '语文', name: '做到Day8', content: '语���练习' },
   { cycle: 13, subject: '物理', name: '做到Day39', content: '物理练习册' },
+  { cycle: 13, subject: '政治', name: '预习Day9-10', content: '政治预习' },
+  { cycle: 13, subject: '地理', name: '预习Day9-10', content: '地理预习' },
+  { cycle: 13, subject: '生物', name: '预习Day9-10', content: '生物预习' },
 
   // 周期14 (8月13日-15日)
   { cycle: 14, subject: '英语', name: '做到Day16', content: '英语练习' },
@@ -165,6 +180,9 @@ const TASKS_RAW = [
   { cycle: 14, subject: '数学', name: '做到Day28', content: '数学练习册' },
   { cycle: 14, subject: '语文', name: '做到Day16', content: '语文练习' },
   { cycle: 14, subject: '物理', name: '做到Day42', content: '物理练习册' },
+  { cycle: 14, subject: '政治', name: '预习Day11-12', content: '政治预习' },
+  { cycle: 14, subject: '地理', name: '预习Day11-12', content: '地理预习' },
+  { cycle: 14, subject: '生物', name: '预习Day11-12', content: '生物预习' },
 
   // 周期15 (8月16日-18日)
   { cycle: 15, subject: '英语', name: '做到Day24', content: '英语练习' },
@@ -172,6 +190,9 @@ const TASKS_RAW = [
   { cycle: 15, subject: '数学', name: '做到Day32', content: '数学练习册' },
   { cycle: 15, subject: '语文', name: '做到Day24', content: '语文练习' },
   { cycle: 15, subject: '物理', name: '复习', content: '物理总复习' },
+  { cycle: 15, subject: '政治', name: '预习Day13-14', content: '政治预习' },
+  { cycle: 15, subject: '地理', name: '预习Day13-14', content: '地理预习' },
+  { cycle: 15, subject: '生物', name: '预习Day13-14', content: '生物预习' },
 
   // 周期16 (8月19日-21日)
   { cycle: 16, subject: '英语', name: '做到Day32', content: '英语练习' },
@@ -204,6 +225,41 @@ const TASKS_RAW = [
   { cycle: 19, subject: '数学', name: '模拟卷', content: '数学模拟试卷' },
   { cycle: 19, subject: '语文', name: '模拟卷', content: '语文模拟试卷' },
   { cycle: 19, subject: '物理', name: '模拟卷', content: '物理模拟试卷' },
+
+  // ===== 英语衡水体练字任务（周期9-19，每周期3个） =====
+  { cycle: 9,  subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 9,  subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 9,  subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 10, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 10, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 10, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 11, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 11, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 11, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 12, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 12, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 12, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 13, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 13, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 13, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 14, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 14, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 14, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 15, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 15, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 15, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 16, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 16, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 16, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 17, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 17, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 17, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 18, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 18, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 18, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
+  { cycle: 19, subject: '英语', name: '衡水体练字①', content: '衡水体练字1页' },
+  { cycle: 19, subject: '英语', name: '衡水体练字②', content: '衡水体练字1页' },
+  { cycle: 19, subject: '英语', name: '衡水体练字③', content: '衡水体练字1页' },
 ];
 
 // 生成完整��务列表（拆分Range任务为独立Day任务）
@@ -372,68 +428,69 @@ const ELEMENT_COLORS = {
 };
 
 // 原石奖励配置
-const REWARD_PRIMOGEMS = 15;       // 每完成一项任务奖励15原石（正常）
-const OVERDUE_REWARD = 10;         // 逾期任务补打卡仅奖励10原石
-const DAILY_BONUS = 30;            // 每日完成所有当天任务额外奖励30原石
+const REWARD_PRIMOGEMS = 15;       // 每完成一项任务奖励15原石
+const CYCLE_BONUS = 90;            // 周期内所有任务全部完成额外奖励90原石
 const WISH_COST = 30;              // 单次祈愿消耗30原石
 const MAX_LEAVE_PER_TASK = 1;      // 每个任务最多请假1次
 
-// ===== 逾期任务重分配 =====
-// 将周期4-8的未完成任务从7月29日开始紧凑排列，每天最多3个
-// 物理/语文学科优先，同一学科按Day编号从小到大
+// ===== 全局Day任务重分配 =====
+// 每个科目的Day任务独立均匀分配到周期9-19
+// 确保每个周期都包含所有科目
+// 非Day逾期任务（周期4-8）也移到周期9
 // 返回 { taskId: { deadline, cycleId } }
-function redistributeOverdue() {
+function redistributeAllDayTasks() {
   const today = new Date('2026-07-29T00:00:00+08:00');
+  const futureCycles = CYCLES.filter(c => c.id >= 9);
+  const subjectOrder = Object.keys(SUBJECTS);
+  const typeOrder = { R: 0, N: 1, P: 2 };
+  const map = {};
 
-  // 收集所有逾期任务（周期4-8，deadline < 7月29日）
-  const overdueTasks = [];
+  // ===== Part 1: 每个科目独立分配Day任务到周期9-19 =====
+  subjectOrder.forEach(subj => {
+    const subjDayTasks = TASKS.filter(t => t.subject === subj && /^Day\d+/.test(t.name));
+    if (subjDayTasks.length === 0) return;
+
+    // 按Day编号 + R/N/P类型排序
+    subjDayTasks.sort((a, b) => {
+      const aDay = parseInt((a.name.match(/Day(\d+)/) || [0, 0])[1]);
+      const bDay = parseInt((b.name.match(/Day(\d+)/) || [0, 0])[1]);
+      if (aDay !== bDay) return aDay - bDay;
+      const aType = a.id.slice(-1);
+      const bType = b.id.slice(-1);
+      return (typeOrder[aType] ?? 3) - (typeOrder[bType] ?? 3);
+    });
+
+    const count = subjDayTasks.length;
+    const numCycles = futureCycles.length;
+
+    // Bresenham式均匀分布：task idx → cycle floor(idx * numCycles / count)
+    // 确保每个周期分到尽可能均等的数量，Day编号从小到大递增
+    subjDayTasks.forEach((task, idx) => {
+      const cycleIdx = Math.min(Math.floor(idx * numCycles / count), numCycles - 1);
+      const cycle = futureCycles[cycleIdx];
+      map[task.id] = {
+        deadline: cycle.endDate,
+        cycleId: cycle.id,
+      };
+    });
+  });
+
+  // ===== Part 2: 非Day逾期任务（周期4-8）→ 移到周期9 =====
   TASKS.forEach(t => {
+    if (/^Day\d+/.test(t.name)) return;
     const dl = new Date(t.deadline + 'T00:00:00+08:00');
     if (dl < today && t.cycleId <= 8) {
-      overdueTasks.push({ id: t.id, name: t.name, subject: t.subject });
-    }
-  });
-
-  // 排序：物理→语文→其他；同科目按Day编号；同Day语文按 R<N<P
-  const subjPriority = { '物理': 0, '语文': 1 };
-  overdueTasks.sort((a, b) => {
-    const aP = subjPriority[a.subject] ?? 2;
-    const bP = subjPriority[b.subject] ?? 2;
-    if (aP !== bP) return aP - bP;
-
-    const aDay = parseInt((a.name.match(/Day(\d+)/) || [0, 0])[1]);
-    const bDay = parseInt((b.name.match(/Day(\d+)/) || [0, 0])[1]);
-    if (aDay !== bDay) return aDay - bDay;
-
-    const typeOrder = { R: 0, N: 1, P: 2 };
-    const aLast = a.id.slice(-1);
-    const bLast = b.id.slice(-1);
-    return (typeOrder[aLast] ?? 0) - (typeOrder[bLast] ?? 0);
-  });
-
-  // 从7月29日起，每天最多3个任务，顺序分配
-  const pad = n => String(n).padStart(2, '0');
-  const MAX_PER_DAY = 3;
-  const map = {};
-  const cursor = new Date(today);
-  let taskIdx = 0;
-
-  while (taskIdx < overdueTasks.length) {
-    for (let s = 0; s < MAX_PER_DAY && taskIdx < overdueTasks.length; s++, taskIdx++) {
-      const dateStr = `${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}-${pad(cursor.getDate())}`;
-      const cycle = CYCLES.find(c => dateStr >= c.startDate && dateStr <= c.endDate);
-      map[overdueTasks[taskIdx].id] = {
-        deadline: dateStr,
-        cycleId: cycle ? cycle.id : overdueTasks[taskIdx].cycleId,
+      map[t.id] = {
+        deadline: futureCycles[0].endDate,
+        cycleId: futureCycles[0].id,
       };
     }
-    cursor.setDate(cursor.getDate() + 1);
-  }
+  });
 
   return map;
 }
 
-const OVERDUE_REDISTRIBUTION = redistributeOverdue();
+const TASK_REDISTRIBUTION = redistributeAllDayTasks();
 
 // 全局导出
 if (typeof window !== 'undefined') {
@@ -443,9 +500,8 @@ if (typeof window !== 'undefined') {
   window.GACHA_POOL = GACHA_POOL;
   window.ELEMENT_COLORS = ELEMENT_COLORS;
   window.REWARD_PRIMOGEMS = REWARD_PRIMOGEMS;
-  window.OVERDUE_REWARD = OVERDUE_REWARD;
-  window.DAILY_BONUS = DAILY_BONUS;
+  window.CYCLE_BONUS = CYCLE_BONUS;
   window.WISH_COST = WISH_COST;
   window.MAX_LEAVE_PER_TASK = MAX_LEAVE_PER_TASK;
-  window.OVERDUE_REDISTRIBUTION = OVERDUE_REDISTRIBUTION;
+  window.TASK_REDISTRIBUTION = TASK_REDISTRIBUTION;
 }

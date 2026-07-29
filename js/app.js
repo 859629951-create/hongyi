@@ -77,8 +77,10 @@ const App = {
     document.getElementById('wishBtn').addEventListener('click', () => Gacha.startWish());
     document.getElementById('resultCloseBtn').addEventListener('click', () => Gacha.closeWish());
 
-    // 新增任务（桌面端按钮 + 移动端FAB）
+    // 新增任务（首页按钮 + 全部任务按钮 + 移动端FAB）
     document.getElementById('addTaskBtn').addEventListener('click', () => this.openAddTaskModal());
+    const allTasksAddBtn = document.getElementById('allTasksAddBtn');
+    if (allTasksAddBtn) allTasksAddBtn.addEventListener('click', () => this.openAddTaskModal());
     const fab = document.getElementById('fabAddTask');
     if (fab) fab.addEventListener('click', () => this.openAddTaskModal());
     document.getElementById('addTaskModalClose').addEventListener('click', () => this.closeAddTaskModal());
@@ -197,15 +199,9 @@ const App = {
 
   renderCycleBanner() {
     const cycle = Store.getCurrentCycle();
-    const stats = Store.getStats();
     const tasks = Store.getMergedTasks().filter(t => t.cycleId === cycle.id);
     const completed = tasks.filter(t => t.status === 'completed').length;
     const total = tasks.length;
-
-    // 今日进度
-    const todayStr = Store.getTodayStr();
-    const todayTasksAll = Store.getMergedTasks().filter(t => t.status !== 'leave' && t.deadline === todayStr);
-    const todayDone = todayTasksAll.filter(t => t.status === 'completed').length;
 
     const banner = document.getElementById('cycleBanner');
     banner.innerHTML = `
@@ -213,7 +209,6 @@ const App = {
         <div class="cycle-banner-title">周期 ${cycle.id} · 当前周</div>
         <div class="cycle-banner-date">
           ${this.formatDate(cycle.startDate)} ~ ${this.formatDate(cycle.endDate)}
-          ${todayTasksAll.length > 0 ? ` | 今日 ${todayDone}/${todayTasksAll.length}` : ''}
         </div>
       </div>
       <div class="cycle-banner-status">
@@ -245,7 +240,7 @@ const App = {
     document.getElementById('overdueCount').textContent = overdueTasks.length;
 
     // 显示逾期重分配信息
-    const redistCount = overdueTasks.filter(t => OVERDUE_REDISTRIBUTION[t.id]).length;
+    const redistCount = overdueTasks.filter(t => TASK_REDISTRIBUTION[t.id]).length;
     const hintEl = document.getElementById('overdueHint');
     if (hintEl && redistCount > 0) {
       hintEl.style.display = 'block';
@@ -255,7 +250,8 @@ const App = {
     }
 
     const grid = document.getElementById('overdueGrid');
-    grid.innerHTML = overdueTasks.map(t => this.taskCardHTML(t, true)).join('');
+    const sortedOverdue = this.sortTasks(overdueTasks);
+    grid.innerHTML = sortedOverdue.map(t => this.taskCardHTML(t, true)).join('');
 
     grid.querySelectorAll('.task-card').forEach(card => {
       card.addEventListener('click', () => this.openTaskDetail(card.dataset.taskId));
@@ -273,18 +269,20 @@ const App = {
       return;
     }
 
-    grid.innerHTML = tasks.map(t => this.taskCardHTML(t, false)).join('');
+    grid.innerHTML = this.sortTasks(tasks).map(t => this.taskCardHTML(t, false)).join('');
     grid.querySelectorAll('.task-card').forEach(card => {
       card.addEventListener('click', () => this.openTaskDetail(card.dataset.taskId));
     });
   },
 
   // ===== 任务卡片HTML =====
-  taskCardHTML(task, isOverdue) {
+  taskCardHTML(task, isOverdue, showCycle) {
     const subj = SUBJECTS[task.subject] || { icon: '📝', color: '#ccc' };
     const statusText = task.status === 'completed' ? '已完成' : (task.status === 'leave' ? '已请假' : '待完成');
     const statusClass = `status-${task.status}`;
     const customBadge = task.isCustom ? '<span class="custom-badge">自定义</span>' : '';
+    const cycleBadge = (showCycle && task.cycleId > 0)
+      ? `<span class="task-card-cycle">周期${task.cycleId}</span>` : '';
 
     return `
       <div class="task-card ${task.status} ${isOverdue ? 'overdue' : ''}" data-task-id="${task.id}"
@@ -292,6 +290,7 @@ const App = {
         <div class="task-card-header">
           <span class="task-card-icon">${subj.icon}</span>
           <span class="task-card-subject">${task.subject}</span>
+          ${cycleBadge}
           ${customBadge}
         </div>
         <div class="task-card-name">${task.name}</div>
@@ -304,6 +303,23 @@ const App = {
     `;
   },
 
+  // ===== 任务排序（按科目顺序 + Day编号） =====
+  sortTasks(tasks) {
+    const subjectOrder = Object.keys(SUBJECTS);
+    return [...tasks].sort((a, b) => {
+      const aSubj = subjectOrder.indexOf(a.subject);
+      const bSubj = subjectOrder.indexOf(b.subject);
+      if (aSubj !== bSubj) return aSubj - bSubj;
+
+      const aDay = parseInt((a.name.match(/Day(\d+)/) || [, '0'])[1]);
+      const bDay = parseInt((b.name.match(/Day(\d+)/) || [, '0'])[1]);
+      if (aDay !== bDay) return aDay - bDay;
+
+      // 同Day编号按名称排序（处理语文R/N/P后缀等）
+      return a.name.localeCompare(b.name);
+    });
+  },
+
   // ===== 全部任务列表（按学科+周期分组） =====
   renderAllTasks() {
     const cycleFilter = document.getElementById('cycleFilter').value;
@@ -313,21 +329,6 @@ const App = {
     if (this.activeSubject !== 'all') tasks = tasks.filter(t => t.subject === this.activeSubject);
     if (cycleFilter !== 'all') tasks = tasks.filter(t => t.cycleId === parseInt(cycleFilter));
     if (statusFilter !== 'all') tasks = tasks.filter(t => t.status === statusFilter);
-
-    // 按周期分组
-    const groups = {};
-    tasks.forEach(t => {
-      const cid = t.cycleId > 0 ? t.cycleId : 0;
-      if (!groups[cid]) groups[cid] = [];
-      groups[cid].push(t);
-    });
-
-    // 排序周期
-    const sortedCycles = Object.keys(groups).map(Number).sort((a, b) => {
-      if (a === 0) return 1;  // 自定义任务排最后
-      if (b === 0) return -1;
-      return a - b;
-    });
 
     document.getElementById('allTaskCount').textContent = `${tasks.length} 项任务`;
 
@@ -342,6 +343,65 @@ const App = {
         </div>`;
       return;
     }
+
+    // 选中具体科目时：扁平列表按Day编号全局排序，不按周期分组
+    if (this.activeSubject !== 'all') {
+      const sorted = this.sortTasks(tasks);
+      const subj = SUBJECTS[this.activeSubject] || { icon: '📝', color: '#ccc' };
+      const completedCount = sorted.filter(t => t.status === 'completed').length;
+      const pct = sorted.length > 0 ? Math.round(completedCount / sorted.length * 100) : 0;
+
+      container.innerHTML = `
+        <div class="cycle-group">
+          <div class="cycle-group-header">
+            <div class="cycle-badge" style="border-color:${subj.color}44;">
+              <span class="cycle-badge-num" style="color:${subj.color};">${subj.icon}</span>
+              <span class="cycle-badge-label">${this.activeSubject}</span>
+            </div>
+            <div class="cycle-group-info">
+              <span style="font-size:16px;font-weight:700;color:var(--text-primary);">${this.activeSubject} 全部任务</span>
+              <div class="cycle-group-date">
+                <span class="date-dot" style="background:${subj.color};"></span>共 ${sorted.length} 项 · 已完成 ${completedCount} 项
+              </div>
+            </div>
+            <div class="cycle-group-progress">
+              <div class="cycle-progress-bar">
+                <div class="cycle-progress-fill" style="width:${pct}%"></div>
+              </div>
+              <span class="cycle-progress-text">${completedCount}/${sorted.length}</span>
+            </div>
+          </div>
+          <div class="cycle-group-tasks">
+            ${sorted.map(t => this.taskCardHTML(t, false, true)).join('')}
+          </div>
+        </div>`;
+
+      container.querySelectorAll('.task-card').forEach(card => {
+        card.addEventListener('click', () => this.openTaskDetail(card.dataset.taskId));
+      });
+      return;
+    }
+
+    // "全部"科目时：按周期分组（原有逻辑）
+    // 按周期分组
+    const groups = {};
+    tasks.forEach(t => {
+      const cid = t.cycleId > 0 ? t.cycleId : 0;
+      if (!groups[cid]) groups[cid] = [];
+      groups[cid].push(t);
+    });
+
+    // 每个周期分组内按科目+Day编号排序
+    Object.keys(groups).forEach(cid => {
+      groups[cid] = this.sortTasks(groups[cid]);
+    });
+
+    // 排序周期
+    const sortedCycles = Object.keys(groups).map(Number).sort((a, b) => {
+      if (a === 0) return 1;  // 自定义任务排最后
+      if (b === 0) return -1;
+      return a - b;
+    });
 
     container.innerHTML = sortedCycles.map(cid => {
       const cycleTasks = groups[cid];
@@ -453,10 +513,10 @@ const App = {
     `;
 
     // 正文
-    document.getElementById('detailName').textContent = task.name;
-    document.getElementById('detailContent').textContent = task.content;
+    document.getElementById('detailName').value = task.name;
+    document.getElementById('detailContent').value = task.content;
+    document.getElementById('detailFrequency').value = task.frequency || 'once';
     document.getElementById('detailCycle').textContent = cycleLabel;
-    document.getElementById('detailDeadline').textContent = this.formatDate(task.deadline);
 
     const adjustInput = document.getElementById('adjustDateInput');
     adjustInput.value = task.deadline;
@@ -477,35 +537,43 @@ const App = {
     if (task.status === 'completed') {
       actions.innerHTML = `
         <div class="btn-completed-badge">✅ 任务已完成</div>
-        ${task.isCustom ? '<button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">🗑️ 删除</button>' : ''}`;
-      if (task.isCustom) {
-        document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
-      }
+        <div class="action-row">
+          <button class="action-btn btn-edit-save" id="btnSaveTaskInfo">💾 保存编辑</button>
+          <button class="action-btn btn-delete-task" id="btnDeleteTask">🗑️ 删除</button>
+        </div>`;
+      document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
+      document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     } else if (task.status === 'leave') {
       actions.innerHTML = `
         <div class="btn-leave-badge">🏖️ 已请假</div>
-        ${task.isCustom ? '<button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">🗑️ 删除</button>' : ''}`;
-      if (task.isCustom) {
-        document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
-      }
+        <div class="action-row">
+          <button class="action-btn btn-edit-save" id="btnSaveTaskInfo">💾 保存编辑</button>
+          <button class="action-btn btn-delete-task" id="btnDeleteTask">🗑️ 删除</button>
+        </div>`;
+      document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
+      document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     } else {
       const rewardLabel = `✅ 打卡完成 (+${REWARD_PRIMOGEMS}原石)`;
 
       const leaveBtnDisabled = !canLeave ? 'disabled' : '';
       const leaveText = canLeave ? '🏖️ 请假' : '🏖️ 请假 (已用完)';
       actions.innerHTML = `
-        <button class="action-btn btn-complete" id="btnComplete">
+        <button class="action-btn btn-complete action-btn-full" id="btnComplete">
           ${rewardLabel}
         </button>
-        <button class="action-btn btn-leave" id="btnLeave" ${leaveBtnDisabled}>
-          ${leaveText}
-        </button>
-        ${task.isCustom ? '<button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">🗑️</button>' : ''}`;
+        <div class="action-row">
+          <button class="action-btn btn-leave" id="btnLeave" ${leaveBtnDisabled}>
+            ${leaveText}
+          </button>
+          <button class="action-btn btn-edit-save" id="btnSaveTaskInfo">💾 保存编辑</button>
+        </div>
+        <div class="action-row">
+          <button class="action-btn btn-delete-task action-btn-full" id="btnDeleteTask">🗑️ 删除</button>
+        </div>`;
       document.getElementById('btnComplete').addEventListener('click', () => this.handleComplete());
       document.getElementById('btnLeave').addEventListener('click', () => this.handleLeave());
-      if (task.isCustom) {
-        document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
-      }
+      document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
+      document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     }
 
     document.getElementById('taskModal').classList.add('active');
@@ -527,10 +595,9 @@ const App = {
     this.updateTopBar();
 
     let msg = `打卡成功！获得 ${result.reward} 原石`;
-    if (result.dailyBonus) {
-      msg += ` 🎉 今日全勤！额外 +${result.dailyBonus.earned} 原石`;
-      // 延迟弹出全勤祝贺
-      setTimeout(() => this.showDailyBonusToast(result.dailyBonus), 800);
+    if (result.cycleBonus) {
+      msg += ` 🎉 周期${result.cycleBonus.cycleId}全勤！额外 +${result.cycleBonus.earned} 原石`;
+      setTimeout(() => this.showCycleBonusToast(result.cycleBonus), 800);
     }
     this.showToast(msg, 'success');
 
@@ -571,14 +638,35 @@ const App = {
     else if (activeTab === 'tasks') this.renderAllTasks();
   },
 
-  // ===== 删除自定义任务 =====
+  // ===== 保存任务编辑 =====
+  handleSaveTaskInfo() {
+    if (!this.currentTaskId) return;
+    const name = document.getElementById('detailName').value.trim();
+    const content = document.getElementById('detailContent').value.trim();
+    const frequency = document.getElementById('detailFrequency').value;
+
+    if (!name) { this.showToast('任务名称不能为空', 'error'); return; }
+
+    Store.updateTaskInfo(this.currentTaskId, { name, content, frequency });
+    this.showToast('任务信息已保存', 'success');
+
+    // 刷新当前弹窗和列表
+    this.openTaskDetail(this.currentTaskId);
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+    if (activeTab === 'home') this.renderHome();
+    else if (activeTab === 'tasks') { this.buildSubjectNav(); this.renderAllTasks(); }
+  },
+
+  // ===== 删除任务（所有任务通用） =====
   handleDeleteTask() {
     if (!this.currentTaskId) return;
-    if (!confirm('确定删除该自定义任务？相关记录也将被清除。')) return;
-    Store.deleteCustomTask(this.currentTaskId);
+    if (!confirm('确定删除该任务？相关打卡/请假记录也将被清除。')) return;
+    Store.deleteTask(this.currentTaskId);
     this.closeModal();
     this.updateTopBar();
     this.renderHome();
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+    if (activeTab === 'tasks') { this.buildSubjectNav(); this.renderAllTasks(); }
     this.showToast('任务已删除', 'success');
   },
 
@@ -586,8 +674,7 @@ const App = {
   openAddTaskModal() {
     document.getElementById('addTaskModal').classList.add('active');
     document.getElementById('addTaskName').value = '';
-    document.getElementById('addTaskContent').value = '';
-    document.getElementById('addTaskDeadline').value = new Date().toISOString().split('T')[0];
+    document.getElementById('addTaskFrequency').value = 'once';
   },
 
   closeAddTaskModal() {
@@ -597,14 +684,11 @@ const App = {
   handleAddTask() {
     const subject = document.getElementById('addTaskSubject').value;
     const name = document.getElementById('addTaskName').value.trim();
-    const content = document.getElementById('addTaskContent').value.trim();
-    const deadline = document.getElementById('addTaskDeadline').value;
+    const frequency = document.getElementById('addTaskFrequency').value;
 
     if (!name) { this.showToast('请输入任务名称', 'error'); return; }
-    if (!content) { this.showToast('请输入任务内容', 'error'); return; }
-    if (!deadline) { this.showToast('��选择截止日期', 'error'); return; }
 
-    const result = Store.addCustomTask({ subject, name, content, deadline });
+    const result = Store.addCustomTask({ subject, name, frequency });
     if (!result.success) {
       this.showToast('添加失败', 'error');
       return;
@@ -612,9 +696,10 @@ const App = {
 
     this.closeAddTaskModal();
     this.updateTopBar();
+    this.buildSubjectNav();
     const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
     if (!activeTab || activeTab === 'home') this.renderHome();
-    else if (activeTab === 'tasks') this.renderAllTasks();
+    else if (activeTab === 'tasks') { this.buildSubjectNav(); this.renderAllTasks(); }
     this.showToast('任务添加成功', 'success');
   },
 
@@ -685,6 +770,24 @@ const App = {
 
       <div class="settings-card">
         <div class="settings-card-title">
+          <span>💾</span> 数据导入导出
+        </div>
+        <div class="settings-card-desc">
+          导出当前所有数据（打卡记录、原石、祈愿记录、图鉴等）为JSON文件备份。需要恢复时，从备份文件导入即可。
+        </div>
+        <div class="sync-actions" style="display:flex;gap:12px;">
+          <button class="action-btn" id="btnExportData" style="background:linear-gradient(135deg, #2a4a6a, #3a6a8a);color:#fff;border:1px solid rgba(116,180,232,0.4);flex:1;">
+            📤 导出数据
+          </button>
+          <button class="action-btn" id="btnImportData" style="background:linear-gradient(135deg, #2a6a4a, #3a8a5a);color:#fff;border:1px solid rgba(141,232,116,0.4);flex:1;">
+            📥 导入数据
+          </button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;">
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">
           <span>🔄</span> 同步说明
         </div>
         <div class="settings-card-desc">
@@ -712,6 +815,19 @@ const App = {
     }
     if (btnDisconnect) {
       btnDisconnect.addEventListener('click', () => this.handleDisconnect());
+    }
+
+    const btnExport = document.getElementById('btnExportData');
+    const btnImport = document.getElementById('btnImportData');
+    const importInput = document.getElementById('importFileInput');
+    if (btnExport) {
+      btnExport.addEventListener('click', () => this.handleExportData());
+    }
+    if (btnImport) {
+      btnImport.addEventListener('click', () => importInput.click());
+    }
+    if (importInput) {
+      importInput.addEventListener('change', (e) => this.handleImportData(e));
     }
   },
 
@@ -777,6 +893,50 @@ const App = {
     this.updateSyncStatus();
     this.renderSettings();
     this.showToast('已断开同步连接', 'success');
+  },
+
+  // ===== 数据导出 =====
+  handleExportData() {
+    const state = Store.load();
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hongyi-backup-${Store.getTodayStr()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showToast('数据已导出为文件', 'success');
+  },
+
+  // ===== 数据导入 =====
+  handleImportData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (typeof data !== 'object' || data === null) {
+          this.showToast('导入失败：文件格式不正确', 'error');
+          return;
+        }
+        if (!confirm('导入数据将覆盖当前所有数据（打卡记录、原石、祈愿记录等），确定继续？')) return;
+        const merged = { ...Store.getDefaultState(), ...data };
+        Store.save(merged);
+        this.updateTopBar();
+        this.buildSubjectNav();
+        this.renderAll();
+        this.showToast('数据导入成功！', 'success');
+      } catch (err) {
+        this.showToast('导入失败：文件解析错误', 'error');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
   },
 
   // ===== 祈愿页面渲染 =====
@@ -857,14 +1017,16 @@ const App = {
     setTimeout(() => toast.classList.remove('show'), 1500);
   },
 
-  // 每日全勤祝贺
-  showDailyBonusToast(dailyBonus) {
+  // 周期全勤祝贺
+  showCycleBonusToast(cycleBonus) {
     const toast = document.getElementById('dailyBonusToast');
     if (!toast) return;
+    const titleEl = toast.querySelector('.daily-bonus-title');
     const msgEl = document.getElementById('dailyBonusMsg');
-    if (msgEl) {
-      msgEl.textContent = `今日${dailyBonus.taskCount}项任务全部完成！`;
-    }
+    const rewardEl = toast.querySelector('.daily-bonus-reward');
+    if (titleEl) titleEl.textContent = `周期${cycleBonus.cycleId}全勤达成！`;
+    if (msgEl) msgEl.textContent = `本周期${cycleBonus.taskCount}项任务全部完成！`;
+    if (rewardEl) rewardEl.textContent = `+${cycleBonus.earned} 原石`;
     toast.classList.remove('show');
     void toast.offsetWidth;
     toast.classList.add('show');

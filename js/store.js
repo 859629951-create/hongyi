@@ -18,8 +18,8 @@ const Store = {
       checkinRecords: [],
       wishRecords: [],
       collection: {},
-      // 每日全勤奖励记录 { '2026-07-29': true }
-      dailyBonuses: {},
+      // 周期全勤奖励记录 { 9: true }
+      cycleBonuses: {},
       activeTab: 'home',
     };
   },
@@ -54,7 +54,7 @@ const Store = {
       checkinRecords: v1data.checkinRecords || [],
       wishRecords: v1data.wishRecords || [],
       collection: v1data.collection || {},
-      dailyBonuses: {},
+      cycleBonuses: {},
       activeTab: v1data.activeTab || 'home',
     };
   },
@@ -79,10 +79,14 @@ const Store = {
   // 获取所有任务（内置 + 自定义）
   getAllTasks() {
     const state = this.load();
-    const merged = TASKS.map(t => {
+    const merged = TASKS.filter(t => {
+      // 软删除：内置任务被用户删除后隐藏
       const override = state.taskOverrides[t.id] || {};
-      // 逾期重分配：如果用户未手动调整，应用新的截止日期和周期
-      const redist = OVERDUE_REDISTRIBUTION[t.id] || null;
+      return !override.deleted;
+    }).map(t => {
+      const override = state.taskOverrides[t.id] || {};
+      // 全局Day任务重分配
+      const redist = TASK_REDISTRIBUTION[t.id] || null;
       const effectiveDeadline = override.deadline || (redist && redist.deadline) || t.deadline;
       const effectiveCycleId = redist ? redist.cycleId : t.cycleId;
       return {
@@ -90,6 +94,9 @@ const Store = {
         cycleId: effectiveCycleId,
         status: override.status || t.status,
         deadline: effectiveDeadline,
+        name: override.name || t.name,
+        content: override.content || t.content,
+        frequency: override.frequency || t.frequency || 'once',
         completedDate: override.completedDate || null,
         leaveDate: override.leaveDate || null,
         adjustedDate: override.adjustedDate || null,
@@ -97,13 +104,19 @@ const Store = {
       };
     });
 
-    // 追加自定义任务
-    const customs = (state.customTasks || []).map(ct => {
+    // 追加自定义任务（排除已删除的）
+    const customs = (state.customTasks || []).filter(ct => {
+      const override = state.taskOverrides[ct.id] || {};
+      return !override.deleted;
+    }).map(ct => {
       const override = state.taskOverrides[ct.id] || {};
       return {
         ...ct,
         status: override.status || ct.status,
         deadline: override.deadline || ct.deadline,
+        name: override.name || ct.name,
+        content: override.content || ct.content,
+        frequency: override.frequency || ct.frequency || 'once',
         completedDate: override.completedDate || null,
         leaveDate: override.leaveDate || null,
         adjustedDate: override.adjustedDate || null,
@@ -164,34 +177,31 @@ const Store = {
       reward,
     });
 
-    // 检查每日全勤奖励
-    const dailyResult = this._checkDailyBonus(state);
+    // 检查周期全勤奖励
+    const cycleResult = this._checkCycleBonus(state, task.cycleId);
 
     this.save(state);
-    return { state, reward, dailyBonus: dailyResult };
+    return { state, reward, cycleBonus: cycleResult };
   },
 
-  // 检查每日全勤：当天所有任务（含重分配任务）是否全部完成
-  _checkDailyBonus(state) {
-    const todayStr = this.getTodayStr();
-    if (state.dailyBonuses && state.dailyBonuses[todayStr]) return null;
+  // 检查周期全勤：该周期所有任务（非请假）是否全部完成
+  _checkCycleBonus(state, cycleId) {
+    if (cycleId <= 0) return null;  // 自定义任务不触发周期奖励
+    if (state.cycleBonuses && state.cycleBonuses[cycleId]) return null;
 
     const allTasks = this.getAllTasks();
-    const todayTasks = allTasks.filter(t => {
-      if (t.status === 'leave') return false;
-      return t.deadline === todayStr;
-    });
+    const cycleTasks = allTasks.filter(t => t.cycleId === cycleId && t.status !== 'leave');
 
-    if (todayTasks.length === 0) return null;
+    if (cycleTasks.length === 0) return null;
 
-    const allDone = todayTasks.every(t => t.status === 'completed');
+    const allDone = cycleTasks.every(t => t.status === 'completed');
     if (!allDone) return null;
 
-    // 全勤！奖励30原石
-    if (!state.dailyBonuses) state.dailyBonuses = {};
-    state.dailyBonuses[todayStr] = true;
-    state.primogems += DAILY_BONUS;
-    return { earned: DAILY_BONUS, taskCount: todayTasks.length };
+    // 周期全勤！奖励90原石
+    if (!state.cycleBonuses) state.cycleBonuses = {};
+    state.cycleBonuses[cycleId] = true;
+    state.primogems += CYCLE_BONUS;
+    return { earned: CYCLE_BONUS, taskCount: cycleTasks.length, cycleId };
   },
 
   // 请假 — 每个任务最多1次
@@ -259,15 +269,27 @@ const Store = {
   },
 
   // 新增自定义任务
-  addCustomTask({ subject, name, content, deadline }) {
+  addCustomTask({ subject, name, frequency }) {
     const state = this.load();
     const id = `CUSTOM-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+    // 根据频次自动生成内容和截止日期
+    const today = this.getTodayStr();
+    const content = name;
+    // 默认截止日期：一次性设为当天，周期任务设为当前周期结束日
+    let deadline = today;
+    if (frequency !== 'once') {
+      const currentCycle = this.getCurrentCycle();
+      deadline = currentCycle ? currentCycle.endDate : today;
+    }
+
     const newTask = {
       id,
       cycleId: 0,
       subject,
       name,
       content,
+      frequency,
       originalDeadline: deadline,
       deadline,
       status: 'pending',
@@ -295,6 +317,43 @@ const Store = {
     state.customTasks.splice(idx, 1);
     // 同时清除相关记录
     delete state.taskOverrides[taskId];
+    delete state.taskLeaves[taskId];
+    state.leaveRecords = state.leaveRecords.filter(r => r.taskId !== taskId);
+    state.checkinRecords = state.checkinRecords.filter(r => r.taskId !== taskId);
+    state.adjustRecords = state.adjustRecords.filter(r => r.taskId !== taskId);
+    this.save(state);
+    return { success: true };
+  },
+
+  // 更新任务信息（名称/内容/频次）— 对所有任务生效
+  updateTaskInfo(taskId, { name, content, frequency }) {
+    const state = this.load();
+    if (!state.taskOverrides[taskId]) {
+      state.taskOverrides[taskId] = {};
+    }
+    if (name !== undefined) state.taskOverrides[taskId].name = name;
+    if (content !== undefined) state.taskOverrides[taskId].content = content;
+    if (frequency !== undefined) state.taskOverrides[taskId].frequency = frequency;
+    this.save(state);
+    return { success: true };
+  },
+
+  // 删除任务 — 对所有任务生效
+  // 自定义任务：硬删除；内置任务：软删除（标记deleted）
+  deleteTask(taskId) {
+    const state = this.load();
+    const isCustom = (state.customTasks || []).some(t => t.id === taskId);
+
+    if (isCustom) {
+      return this.deleteCustomTask(taskId);
+    }
+
+    // 内置任务：软删除
+    if (!state.taskOverrides[taskId]) {
+      state.taskOverrides[taskId] = {};
+    }
+    state.taskOverrides[taskId].deleted = true;
+    // 清除打卡/请假记录
     delete state.taskLeaves[taskId];
     state.leaveRecords = state.leaveRecords.filter(r => r.taskId !== taskId);
     state.checkinRecords = state.checkinRecords.filter(r => r.taskId !== taskId);
@@ -374,16 +433,17 @@ const Store = {
     const leave = tasks.filter(t => t.status === 'leave');
     const pending = tasks.filter(t => t.status === 'pending');
     const totalEarned = state.checkinRecords.reduce((sum, r) => sum + r.reward, 0);
-    const dailyBonusTotal = Object.keys(state.dailyBonuses || {}).length * DAILY_BONUS;
+    const cycleBonusTotal = Object.keys(state.cycleBonuses || {}).length * CYCLE_BONUS;
     const totalSpent = state.wishRecords.length * WISH_COST;
     const collectionCount = Object.keys(state.collection).length;
     const totalPoolSize = GACHA_POOL.five.length + GACHA_POOL.four.length + GACHA_POOL.three.length;
 
-    // 今日待完成任务
-    const todayStr = this.getTodayStr();
-    const todayTasks = tasks.filter(t => t.status !== 'leave' && t.deadline === todayStr);
-    const todayDone = todayTasks.filter(t => t.status === 'completed').length;
-    const todayAllDone = todayTasks.length > 0 && todayDone === todayTasks.length;
+    // 当前周期进度
+    const currentCycle = this.getCurrentCycle();
+    const cycleTasks = tasks.filter(t => t.cycleId === currentCycle.id);
+    const cycleCompleted = cycleTasks.filter(t => t.status === 'completed').length;
+    const cycleAllDone = cycleTasks.length > 0 && cycleCompleted === cycleTasks.filter(t => t.status !== 'leave').length;
+    const cycleBonusClaimed = !!(state.cycleBonuses && state.cycleBonuses[currentCycle.id]);
 
     return {
       totalTasks: tasks.length,
@@ -393,7 +453,7 @@ const Store = {
       pendingCount: pending.length,
       primogems: state.primogems,
       totalEarned,
-      dailyBonusTotal,
+      cycleBonusTotal,
       totalSpent,
       totalWishes: state.wishRecords.length,
       collectionCount,
@@ -403,10 +463,11 @@ const Store = {
       fourStarCount: state.wishRecords.filter(w => w.rarity === 4).length,
       threeStarCount: state.wishRecords.filter(w => w.rarity === 3).length,
       pityCounter: state.pityCounter || 0,
-      todayTaskCount: todayTasks.length,
-      todayDoneCount: todayDone,
-      todayAllDone,
-      dailyBonusClaimed: !!(state.dailyBonuses && state.dailyBonuses[todayStr]),
+      currentCycleId: currentCycle.id,
+      cycleTaskCount: cycleTasks.length,
+      cycleCompletedCount: cycleCompleted,
+      cycleAllDone,
+      cycleBonusClaimed,
     };
   },
 
