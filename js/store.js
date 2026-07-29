@@ -105,6 +105,10 @@ const Store = {
     });
 
     // 追加自定义任务（排除已删除的）
+    // 如果 cycleId 为 0（旧数据），自动修正为当前周期
+    const currentCycle = this.getCurrentCycle();
+    const defaultCycleId = currentCycle ? currentCycle.id : 9;
+
     const customs = (state.customTasks || []).filter(ct => {
       const override = state.taskOverrides[ct.id] || {};
       return !override.deleted;
@@ -112,6 +116,7 @@ const Store = {
       const override = state.taskOverrides[ct.id] || {};
       return {
         ...ct,
+        cycleId: ct.cycleId > 0 ? ct.cycleId : defaultCycleId,
         status: override.status || ct.status,
         deadline: override.deadline || ct.deadline,
         name: override.name || ct.name,
