@@ -238,7 +238,7 @@ const App = {
     document.getElementById('overdueCount').textContent = overdueTasks.length;
 
     // 显示逾期重分配信息
-    const redistCount = overdueTasks.filter(t => OVERDUE_REDISTRIBUTION[t.id]).length;
+    const redistCount = overdueTasks.filter(t => TASK_REDISTRIBUTION[t.id]).length;
     const hintEl = document.getElementById('overdueHint');
     if (hintEl && redistCount > 0) {
       hintEl.style.display = 'block';
@@ -511,8 +511,9 @@ const App = {
     `;
 
     // 正文
-    document.getElementById('detailName').textContent = task.name;
-    document.getElementById('detailContent').textContent = task.content;
+    document.getElementById('detailName').value = task.name;
+    document.getElementById('detailContent').value = task.content;
+    document.getElementById('detailFrequency').value = task.frequency || 'once';
     document.getElementById('detailCycle').textContent = cycleLabel;
     document.getElementById('detailDeadline').textContent = this.formatDate(task.deadline);
 
@@ -532,20 +533,27 @@ const App = {
     const taskLeaveCount = state.taskLeaves && state.taskLeaves[taskId] ? 1 : 0;
     const canLeave = taskLeaveCount < MAX_LEAVE_PER_TASK;
 
+    // 通用编辑/删除按钮（所有任务可用）
+    const editDeleteBtns = `
+      <button class="action-btn btn-edit-save" id="btnSaveTaskInfo" style="flex:0.5;">
+        💾 保存编辑
+      </button>
+      <button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">
+        🗑️ 删除
+      </button>`;
+
     if (task.status === 'completed') {
       actions.innerHTML = `
         <div class="btn-completed-badge">✅ 任务已完成</div>
-        ${task.isCustom ? '<button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">🗑️ 删除</button>' : ''}`;
-      if (task.isCustom) {
-        document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
-      }
+        ${editDeleteBtns}`;
+      document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
+      document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     } else if (task.status === 'leave') {
       actions.innerHTML = `
         <div class="btn-leave-badge">🏖️ 已请假</div>
-        ${task.isCustom ? '<button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">🗑️ 删除</button>' : ''}`;
-      if (task.isCustom) {
-        document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
-      }
+        ${editDeleteBtns}`;
+      document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
+      document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     } else {
       const rewardLabel = `✅ 打卡完成 (+${REWARD_PRIMOGEMS}原石)`;
 
@@ -558,12 +566,16 @@ const App = {
         <button class="action-btn btn-leave" id="btnLeave" ${leaveBtnDisabled}>
           ${leaveText}
         </button>
-        ${task.isCustom ? '<button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">🗑️</button>' : ''}`;
+        <button class="action-btn btn-edit-save" id="btnSaveTaskInfo" style="flex:0.5;">
+          💾 保存编辑
+        </button>
+        <button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">
+          🗑️ 删除
+        </button>`;
       document.getElementById('btnComplete').addEventListener('click', () => this.handleComplete());
       document.getElementById('btnLeave').addEventListener('click', () => this.handleLeave());
-      if (task.isCustom) {
-        document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
-      }
+      document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
+      document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     }
 
     document.getElementById('taskModal').classList.add('active');
@@ -628,14 +640,35 @@ const App = {
     else if (activeTab === 'tasks') this.renderAllTasks();
   },
 
-  // ===== 删除自定义任务 =====
+  // ===== 保存任务编辑 =====
+  handleSaveTaskInfo() {
+    if (!this.currentTaskId) return;
+    const name = document.getElementById('detailName').value.trim();
+    const content = document.getElementById('detailContent').value.trim();
+    const frequency = document.getElementById('detailFrequency').value;
+
+    if (!name) { this.showToast('任务名称不能为空', 'error'); return; }
+
+    Store.updateTaskInfo(this.currentTaskId, { name, content, frequency });
+    this.showToast('任务信息已保存', 'success');
+
+    // 刷新当前弹窗和列表
+    this.openTaskDetail(this.currentTaskId);
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+    if (activeTab === 'home') this.renderHome();
+    else if (activeTab === 'tasks') { this.buildSubjectNav(); this.renderAllTasks(); }
+  },
+
+  // ===== 删除任务（所有任务通用） =====
   handleDeleteTask() {
     if (!this.currentTaskId) return;
-    if (!confirm('确定删除该自定义任务？相关记录也将被清除。')) return;
-    Store.deleteCustomTask(this.currentTaskId);
+    if (!confirm('确定删除该任务？相关打卡/请假记录也将被清除。')) return;
+    Store.deleteTask(this.currentTaskId);
     this.closeModal();
     this.updateTopBar();
     this.renderHome();
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+    if (activeTab === 'tasks') { this.buildSubjectNav(); this.renderAllTasks(); }
     this.showToast('任务已删除', 'success');
   },
 
