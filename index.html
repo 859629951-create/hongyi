@@ -229,11 +229,21 @@
       <div class="task-detail-body">
         <div class="detail-row">
           <label>任务名称</label>
-          <div class="detail-value" id="detailName"></div>
+          <input type="text" class="detail-edit-input" id="detailName" />
         </div>
         <div class="detail-row">
           <label>任务内容</label>
-          <div class="detail-value" id="detailContent"></div>
+          <textarea class="detail-edit-textarea" id="detailContent" rows="2"></textarea>
+        </div>
+        <div class="detail-row">
+          <label>任务频次</label>
+          <select class="detail-edit-select" id="detailFrequency">
+            <option value="once">一次性任务</option>
+            <option value="every1">每周期1次</option>
+            <option value="every2">每周期2次</option>
+            <option value="every3">每周期3次</option>
+            <option value="every4">每周期4次</option>
+          </select>
         </div>
         <div class="detail-row">
           <label>所属周期</label>
