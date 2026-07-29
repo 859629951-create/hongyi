@@ -515,7 +515,6 @@ const App = {
     document.getElementById('detailContent').value = task.content;
     document.getElementById('detailFrequency').value = task.frequency || 'once';
     document.getElementById('detailCycle').textContent = cycleLabel;
-    document.getElementById('detailDeadline').textContent = this.formatDate(task.deadline);
 
     const adjustInput = document.getElementById('adjustDateInput');
     adjustInput.value = task.deadline;
@@ -533,25 +532,22 @@ const App = {
     const taskLeaveCount = state.taskLeaves && state.taskLeaves[taskId] ? 1 : 0;
     const canLeave = taskLeaveCount < MAX_LEAVE_PER_TASK;
 
-    // 通用编辑/删除按钮（所有任务可用）
-    const editDeleteBtns = `
-      <button class="action-btn btn-edit-save" id="btnSaveTaskInfo" style="flex:0.5;">
-        💾 保存编辑
-      </button>
-      <button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">
-        🗑️ 删除
-      </button>`;
-
     if (task.status === 'completed') {
       actions.innerHTML = `
         <div class="btn-completed-badge">✅ 任务已完成</div>
-        ${editDeleteBtns}`;
+        <div class="action-row">
+          <button class="action-btn btn-edit-save" id="btnSaveTaskInfo">💾 保存编辑</button>
+          <button class="action-btn btn-delete-task" id="btnDeleteTask">🗑️ 删除</button>
+        </div>`;
       document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
       document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     } else if (task.status === 'leave') {
       actions.innerHTML = `
         <div class="btn-leave-badge">🏖️ 已请假</div>
-        ${editDeleteBtns}`;
+        <div class="action-row">
+          <button class="action-btn btn-edit-save" id="btnSaveTaskInfo">💾 保存编辑</button>
+          <button class="action-btn btn-delete-task" id="btnDeleteTask">🗑️ 删除</button>
+        </div>`;
       document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
       document.getElementById('btnDeleteTask').addEventListener('click', () => this.handleDeleteTask());
     } else {
@@ -560,18 +556,18 @@ const App = {
       const leaveBtnDisabled = !canLeave ? 'disabled' : '';
       const leaveText = canLeave ? '🏖️ 请假' : '🏖️ 请假 (已用完)';
       actions.innerHTML = `
-        <button class="action-btn btn-complete" id="btnComplete">
+        <button class="action-btn btn-complete action-btn-full" id="btnComplete">
           ${rewardLabel}
         </button>
-        <button class="action-btn btn-leave" id="btnLeave" ${leaveBtnDisabled}>
-          ${leaveText}
-        </button>
-        <button class="action-btn btn-edit-save" id="btnSaveTaskInfo" style="flex:0.5;">
-          💾 保存编辑
-        </button>
-        <button class="action-btn btn-delete-task" id="btnDeleteTask" style="flex:0.3;">
-          🗑️ 删除
-        </button>`;
+        <div class="action-row">
+          <button class="action-btn btn-leave" id="btnLeave" ${leaveBtnDisabled}>
+            ${leaveText}
+          </button>
+          <button class="action-btn btn-edit-save" id="btnSaveTaskInfo">💾 保存编辑</button>
+        </div>
+        <div class="action-row">
+          <button class="action-btn btn-delete-task action-btn-full" id="btnDeleteTask">🗑️ 删除</button>
+        </div>`;
       document.getElementById('btnComplete').addEventListener('click', () => this.handleComplete());
       document.getElementById('btnLeave').addEventListener('click', () => this.handleLeave());
       document.getElementById('btnSaveTaskInfo').addEventListener('click', () => this.handleSaveTaskInfo());
