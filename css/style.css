@@ -1143,6 +1143,56 @@ body {
   line-height: 1.6;
 }
 
+/* ===== 任务详情可编辑输入框 ===== */
+.detail-edit-input,
+.detail-edit-textarea,
+.detail-edit-select {
+  width: 100%;
+  font-size: 15px;
+  color: var(--text-primary);
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-gold);
+  border-radius: 10px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.detail-edit-input:focus,
+.detail-edit-textarea:focus,
+.detail-edit-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+}
+
+.detail-edit-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d4af37' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.detail-edit-select option {
+  background: var(--bg-medium);
+  color: var(--text-primary);
+}
+
+.btn-edit-save {
+  background: linear-gradient(135deg, #2a5a4a, #3a7a5a);
+  color: #fff;
+  border: 1px solid rgba(116, 232, 180, 0.3);
+  font-weight: 600;
+}
+
+.btn-edit-save:hover {
+  background: linear-gradient(135deg, #3a6a5a, #4a8a6a);
+  box-shadow: 0 0 12px rgba(116, 232, 180, 0.2);
+}
+
 #adjustRow {
   flex-direction: row;
   align-items: center;
