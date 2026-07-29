@@ -700,7 +700,8 @@ const App = {
     const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
     if (!activeTab || activeTab === 'home') this.renderHome();
     else if (activeTab === 'tasks') { this.buildSubjectNav(); this.renderAllTasks(); }
-    this.showToast('任务添加成功', 'success');
+    const count = result.tasks ? result.tasks.length : 1;
+    this.showToast(count > 1 ? `已添加 ${count} 个任务` : '任务添加成功', 'success');
   },
 
   // ===== 设置页面 =====

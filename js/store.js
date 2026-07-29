@@ -271,39 +271,53 @@ const Store = {
   // 新增自定义任务
   addCustomTask({ subject, name, frequency }) {
     const state = this.load();
-    const id = `CUSTOM-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-    // 根据频次自动生成内容和截止日期
+    // 频次 → 任务数量映射
+    const freqCount = { once: 1, every1: 1, every2: 2, every3: 3, every4: 4 };
+    const count = freqCount[frequency] || 1;
+
+    // 截止日期
     const today = this.getTodayStr();
-    const content = name;
-    // 默认截止日期：一次性设为当天，周期任务设为当前周期结束日
     let deadline = today;
     if (frequency !== 'once') {
       const currentCycle = this.getCurrentCycle();
       deadline = currentCycle ? currentCycle.endDate : today;
     }
 
-    const newTask = {
-      id,
-      cycleId: 0,
-      subject,
-      name,
-      content,
-      frequency,
-      originalDeadline: deadline,
-      deadline,
-      status: 'pending',
-      completedDate: null,
-      leaveDate: null,
-      adjustedDate: null,
-      createdAt: new Date().toISOString(),
-      isCustom: true,
-    };
+    // 序号标记
+    const markers = ['①', '②', '③', '④'];
 
     if (!state.customTasks) state.customTasks = [];
-    state.customTasks.push(newTask);
+    const created = [];
+
+    for (let i = 0; i < count; i++) {
+      const id = `CUSTOM-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
+      const suffix = count > 1 ? markers[i] : '';
+      const taskName = count > 1 ? `${name} ${suffix}` : name;
+
+      const newTask = {
+        id,
+        cycleId: 0,
+        subject,
+        name: taskName,
+        content: taskName,
+        frequency,
+        originalDeadline: deadline,
+        deadline,
+        status: 'pending',
+        completedDate: null,
+        leaveDate: null,
+        adjustedDate: null,
+        createdAt: new Date().toISOString(),
+        isCustom: true,
+      };
+
+      state.customTasks.push(newTask);
+      created.push(newTask);
+    }
+
     this.save(state);
-    return { success: true, task: newTask };
+    return { success: true, tasks: created };
   },
 
   // 删除自定义任务
