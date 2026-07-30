@@ -289,8 +289,13 @@ TASKS_RAW.forEach(t => {
     }
   } else {
     // 不需要拆分，直接添加
+    // 检测ID冲突：同科目同周期有多个非拆分任务时，追加任务名保证唯一性
+    let id = makeTaskId(t.subject, t.cycle);
+    if (TASKS.some(existing => existing.id === id)) {
+      id = `${id}-${t.name}`;
+    }
     TASKS.push({
-      id: makeTaskId(t.subject, t.cycle),
+      id,
       cycleId: t.cycle,
       subject: t.subject,
       name: t.name,
